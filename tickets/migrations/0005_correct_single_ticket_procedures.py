@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tickets_app', '0004_tickets_functions'),
+        ('tickets', '0004_tickets_functions'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

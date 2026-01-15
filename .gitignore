@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+
+# Django
+db.sqlite3
+media/
+staticfiles_collected/
+
+# Environment variables (KLUCZOWE!)
+.env
+
+# Poetry
+.python-version
+# poetry.lock zostawiamy! Jest potrzebny w Git.
+
+# Docker
+.docker/
+
+# IDE
+.idea/
+.vscode/

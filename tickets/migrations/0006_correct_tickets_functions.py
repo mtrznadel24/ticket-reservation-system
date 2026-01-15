@@ -3,7 +3,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tickets_app', '0005_correct_single_ticket_procedures'),
+        ('tickets', '0005_correct_single_ticket_procedures'),
     ]
 
     operations = [

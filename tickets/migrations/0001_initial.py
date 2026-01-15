@@ -60,7 +60,7 @@ class Migration(migrations.Migration):
                 ('price', models.DecimalField(decimal_places=2, max_digits=8)),
                 ('status', models.CharField(choices=[('available', 'Available'), ('reserved', 'Reserved'), ('sold', 'Sold')], max_length=16)),
                 ('reserved_until', models.DateTimeField(blank=True, null=True)),
-                ('event', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets_app.event')),
+                ('event', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets.event')),
             ],
             options={
                 'db_table': 'tickets',
@@ -71,9 +71,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('ticket_UUID', models.UUIDField(default=uuid.uuid4, editable=False)),
-                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets_app.order')),
-                ('participant', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets_app.participant')),
-                ('ticket', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets_app.ticket')),
+                ('order', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets.order')),
+                ('participant', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets.participant')),
+                ('ticket', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='tickets.ticket')),
             ],
             options={
                 'db_table': 'orders_details',

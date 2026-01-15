@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('tickets_app', '0006_correct_tickets_functions'),
+        ('tickets', '0001_initial'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                     o.user_id,
                     o.status AS order_status,
                     o.updated_at,
-                    od."ticket_UUID",   -- <== poprawnie z cudzysłowami
+                    od.ticket_id,
                     t.event_id,
                     t.seat,
                     t.status AS ticket_status
@@ -27,7 +27,6 @@ class Migration(migrations.Migration):
                 JOIN orders_details od ON o.id = od.order_id
                 JOIN tickets t ON od.ticket_id = t.id
                 WHERE o.status = 'completed';
-
             """,
             reverse_sql="DROP VIEW IF EXISTS user_tickets_view;"
         )

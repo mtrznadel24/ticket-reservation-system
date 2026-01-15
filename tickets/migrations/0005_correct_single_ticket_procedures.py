@@ -1,12 +1,10 @@
-import django.db.models.deletion
 from django.conf import settings
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0004_tickets_functions'),
+        ("tickets", "0004_tickets_functions"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -44,7 +42,7 @@ class Migration(migrations.Migration):
                 END;
                 $$;
             """,
-            reverse_sql="DROP PROCEDURE IF EXISTS reserve_ticket_for_client(BIGINT, BIGINT);"
+            reverse_sql="DROP PROCEDURE IF EXISTS reserve_ticket_for_client(BIGINT, BIGINT);",
         ),
         migrations.RunSQL(
             sql="""
@@ -75,6 +73,6 @@ class Migration(migrations.Migration):
                 END;
                 $$ LANGUAGE plpgsql;
             """,
-            reverse_sql="DROP FUNCTION IF EXISTS purchase_ticket(BIGINT, BIGINT);"
-        )
+            reverse_sql="DROP FUNCTION IF EXISTS purchase_ticket(BIGINT, BIGINT);",
+        ),
     ]

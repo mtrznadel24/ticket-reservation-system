@@ -1,9 +1,9 @@
 from django.db import migrations
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
-        ('tickets', '0005_correct_single_ticket_procedures'),
+        ("tickets", "0005_correct_single_ticket_procedures"),
     ]
 
     operations = [
@@ -40,9 +40,8 @@ class Migration(migrations.Migration):
                 END;
                 $$ LANGUAGE plpgsql;
             """,
-            reverse_sql="DROP FUNCTION IF EXISTS purchase_ticket(BIGINT, BIGINT);"
+            reverse_sql="DROP FUNCTION IF EXISTS purchase_ticket(BIGINT, BIGINT);",
         ),
-
         # cancel_order: tylko order_id
         migrations.RunSQL(
             sql="""
@@ -72,6 +71,6 @@ class Migration(migrations.Migration):
                 END;
                 $$ LANGUAGE plpgsql;
             """,
-            reverse_sql="DROP FUNCTION IF EXISTS cancel_order(BIGINT);"
+            reverse_sql="DROP FUNCTION IF EXISTS cancel_order(BIGINT);",
         ),
     ]

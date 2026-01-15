@@ -1,12 +1,10 @@
-import django.db.models.deletion
 from django.conf import settings
-from django.db import migrations, models
+from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0001_initial'),
+        ("tickets", "0001_initial"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -28,6 +26,6 @@ class Migration(migrations.Migration):
                 JOIN tickets t ON od.ticket_id = t.id
                 WHERE o.status = 'completed';
             """,
-            reverse_sql="DROP VIEW IF EXISTS user_tickets_view;"
+            reverse_sql="DROP VIEW IF EXISTS user_tickets_view;",
         )
     ]

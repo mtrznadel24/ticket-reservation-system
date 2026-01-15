@@ -20,7 +20,7 @@
                     </span>
                 </p>
                 <p class="mb-1">
-                    <strong>Wartość:</strong> ${{ order.total_price }}
+                    <strong>Wartość:</strong> ${{ order.total_calculated_price|default:0 }}
                 </p>
                 <div class="mt-2">
                     <a href="{% url 'order_details' order.id %}" class="btn btn-info btn-sm">Szczegóły</a>

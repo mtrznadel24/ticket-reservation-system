@@ -1,9 +1,9 @@
 from django.db import migrations
 
-class Migration(migrations.Migration):
 
+class Migration(migrations.Migration):
     dependencies = [
-        ('tickets', '0008_update_view_tickets'),
+        ("tickets", "0008_update_view_tickets"),
     ]
 
     operations = [
@@ -42,6 +42,6 @@ class Migration(migrations.Migration):
                 JOIN tickets t ON od.ticket_id = t.id
                 JOIN events e ON t.event_id = e.id
                 JOIN orders o ON od.order_id = o.id;
-            """
+            """,
         )
     ]

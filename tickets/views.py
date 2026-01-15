@@ -15,11 +15,11 @@ from django.contrib.auth import login
 from .forms import CustomUserCreationForm
 
 class IndexView(TemplateView):
-    template_name = 'tickets_app/index.html'
+    template_name = 'tickets/index.html'
 
 
 class EventsView(generic.ListView):
-    template_name = 'tickets_app/events.html'
+    template_name = 'tickets/events.html'
     context_object_name = 'latest_events'
 
     def get_queryset(self):
@@ -103,7 +103,7 @@ def tickets_view(request, event_id):
             messages.error(request, str(e))
             return redirect('tickets', event_id=event_id)
 
-    return render(request, 'tickets_app/tickets.html', {'event': event, "tickets": tickets})
+    return render(request, 'tickets/tickets.html', {'event': event, "tickets": tickets})
 
 
 @login_required
@@ -130,7 +130,7 @@ def cart_view(request):
         order_details = []
         total = 0
 
-    return render(request, 'tickets_app/cart.html', {
+    return render(request, 'tickets/cart.html', {
         'order': order,
         'order_details': order_details,
         'total': total
@@ -182,14 +182,14 @@ def register(request):
 def my_orders(request):
     orders = Order.objects.filter(user=request.user).order_by('-updated_at')
 
-    return render(request, 'tickets_app/my_orders.html', {'orders': orders})
+    return render(request, 'tickets/my_orders.html', {'orders': orders})
 
 @login_required
 def order_details(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     details = OrderDetails.objects.filter(order=order).select_related('ticket', 'participant')
 
-    return render(request, 'tickets_app/order_details.html', {
+    return render(request, 'tickets/order_details.html', {
         'order': order,
         'details': details
     })

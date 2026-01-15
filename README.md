@@ -35,7 +35,7 @@ A web-based ticket reservation system built with Django and PostgreSQL. Users ca
 
    ```bash
    git clone https://github.com/your-username/ticket-reservation-system.git
-   cd ticket-reservation-system/tickets_system
+   cd ticket-reservation-system/config
    ```
 
 2. **Create a virtual environment**

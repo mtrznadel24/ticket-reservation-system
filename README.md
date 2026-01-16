@@ -1,94 +1,95 @@
-# 🎟️ Ticket Reservation System
-
-A web-based ticket reservation system built with Django and PostgreSQL. Users can browse upcoming events, reserve and purchase tickets, and manage their orders through a user-friendly interface.
+# 🎟️ Ticket Reservation System (Pro Edition)
+A robust, web-based ticket reservation system built with Django and PostgreSQL. Originally developed as a university database project, recently refactored and expanded independently to implement professional architectural patterns and modern DevOps practices.
 
 > ⚠️ Note: The payment system is **not implemented**. Tickets can be reserved and marked as sold, but no real payment gateway is integrated.
 
 ---
 
-## 🚀 Features
+## 📖 Project Background & Evolution
+This project originated as a 2-person university assignment for a Database Systems course. I decided to refactor the code to transform it from a simple academic task into a professional-grade application.
 
-- User registration and login system (based on Django's built-in auth).
-- Browse and search upcoming events.
-- Reserve multiple tickets per event.
-- Shopping cart view with participant data input.
-- Automatic ticket reservation expiration (10 minutes).
-- Order history and detailed order view.
-- Order cancellation and ticket availability reset.
-- Bootstrap 5-based responsive UI.
+### Key Refactoring Milestones:
+* Architectural Overhaul: Introduced a Service Layer to decouple business logic from views, adhering to the Separation of Concerns principle.
 
+* Performance Optimization: Eliminated N+1 query problems by strategically using select_related, prefetch_related, and database annotate.
+
+* Concurrency Control: Implemented Database Row-Level Locking (select_for_update) to prevent race conditions during ticket reservations.
+
+* Modern Infrastructure: Fully dockerized the application (Backend + PostgreSQL) using Docker Compose for seamless deployment.
+
+* Advanced CLI Tooling: Moved maintenance tasks (like clearing expired reservations) into custom Django Management Commands.
 ---
 
 ## 🧱 Tech Stack
 
 - **Backend:** Django (Python)
 - **Database:** PostgreSQL
+- **DevOps:** Docker, Docker Compose
 - **Frontend:** HTML, Bootstrap 5
 - **Auth:** Django built-in authentication
 - **ORM:** Django ORM
+- **Linter:** Ruff
 
 ---
 
-## 🧪 How to Run Locally
+## 🚀 Features & Business Logic
 
-1. **Clone the repository**
 
-   ```bash
-   git clone https://github.com/your-username/ticket-reservation-system.git
-   cd ticket-reservation-system/config
-   ```
+### User Experience
+* Smart Event Browsing: Optimized listing of upcoming events with real-time ticket availability counting (database-level).
 
-2. **Create a virtual environment**
+* Secure Reservation: Multi-ticket selection with a 15-minute window before seats are automatically released.
 
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
+* Enhanced Shopping Cart: Dedicated view for inputting specific participant data (First Name, Last Name, PESEL) for each ticket.
 
-3. **Install dependencies**
+* Order Management: Full order history for registered users, detailed order tracking, and a cancellation system that resets ticket availability.
 
-   ```bash
-   pip install -r requirements.txt
-   ```
+* Responsive UI: Fully mobile-friendly interface built with Bootstrap 5.
 
-4. **Set up the database**
+### Technical Excellence (The "Under the Hood" Stuff)
+* Service Layer Architecture: Business logic is entirely decoupled from Django views, ensuring high maintainability and testability.
 
-   Make sure PostgreSQL is running and create a database, e.g. `tickets_db`.
+* Database Optimization: Eliminated N+1 query problems using strategic annotate, select_related, and Count/Sum aggregations.
 
-   Update `settings.py` with your PostgreSQL credentials:
+* Concurrency Protection: Implemented Row-Level Locking (select_for_update) to ensure no two users can reserve the same seat simultaneously.
 
-   ```python
-   DATABASES = {
-       'default': {
-           'ENGINE': 'django.db.backends.postgresql',
-           'NAME': 'tickets_db',
-           'USER': 'your_user',
-           'PASSWORD': 'your_password',
-           'HOST': 'localhost',
-           'PORT': '5432',
-       }
-   }
-   ```
+* Data Integrity: Used Atomic Transactions to ensure that multi-step processes (like finalizing an order) either complete fully or roll back on error.
 
-5. **Apply migrations**
-
-   ```bash
-   python manage.py makemigrations
-   python manage.py migrate
-   ```
-
-6. **Run the development server**
-
-   ```bash
-   python manage.py runserver
-   ```
+* Maintenance Automation: Custom Django Management Command (cleanup_reservations) to handle database cleanup, ready for Cron or Celery scheduling.
 
 ---
 
+## 🛠️ Installation & Running
+The easiest way to run the project is using Docker:
+
+1. Clone the repository:
+```bash
+git clone https://github.com/mtrznadel24/ticket-reservation-system.git
+cd ticket-reservation-system
+```
+2. Set up environment variables: Create a .env file based on .env.example.
+3. Run with Docker Compose:
+```bash
+docker-compose up --build
+```
+The app will be available at http://localhost:8000.
+
+## 🗺️ Roadmap (Future Enhancements)
+* [ ] Asynchronous Tasks: Integration with Redis & Celery for automated background reservation cleanup and email notifications.
+
+* [ ] Data Security: Hashing/Encoding of sensitive participant data (PESEL) before database storage.
+
+* [ ] Guest Checkout: Allowing users to reserve tickets without a mandatory account.
+
+* [ ] Payment Integration: Mocking a payment gateway (e.g., Stripe/PayU integration).
 ## 👥 Authors
 
-- [Patryk Blacha](https://github.com/PatrykBlacha)
-- [Maciej Trznadel](https://github.com/mtrznadel24)
+- [Maciej Trznadel](https://github.com/mtrznadel24) - Developer, Architect, Refactoring & DevOps
+- [Patryk Blacha](https://github.com/PatrykBlacha) - Orginal project collabolator
+
+### [Orignal Repository](https://github.com/PatrykBlacha/ticket-reservation-system)
+
+
 
 
 

@@ -1,10 +1,8 @@
 from django.db import migrations
 
-class Migration(migrations.Migration):
 
-    dependencies = [
-        ('tickets', '0007_UUID_view_user_tickets')
-    ]
+class Migration(migrations.Migration):
+    dependencies = [("tickets", "0007_UUID_view_user_tickets")]
 
     operations = [
         migrations.RunSQL(
@@ -39,6 +37,6 @@ class Migration(migrations.Migration):
                 FROM orders_details od
                 JOIN tickets t ON od.ticket_id = t.id
                 JOIN orders o ON od.order_id = o.id;
-            """
+            """,
         )
     ]

@@ -30,7 +30,7 @@
                             <h5 class="card-title">{{ event.name }}</h5>
                             <p class="card-text text-muted">
                                 <i class="bi bi-calendar"></i> {{ event.event_date|date:"d.m.Y" }}<br> {# Removed H:i #}
-                                <i class="bi bi-ticket-fill"></i> Dostępne bilety: {{ event.available_tickets }}
+                                <i class="bi bi-ticket-fill"></i> Dostępne bilety: {{ event.available_count }}
                             </p>
                             <div class="mt-auto">
                                 <a href="{% url 'tickets' event.id %}" class="btn btn-primary w-100">

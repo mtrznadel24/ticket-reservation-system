@@ -72,6 +72,10 @@ cd ticket-reservation-system
 ```bash
 docker-compose up --build
 ```
+4. Run migrations:
+```bash
+docker compose exec backend python manage.py migrate
+```
 The app will be available at http://localhost:8000.
 
 ## 🗺️ Roadmap (Future Enhancements)

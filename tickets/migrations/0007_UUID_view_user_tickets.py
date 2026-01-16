@@ -11,13 +11,15 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunSQL(
             sql="""
-                CREATE OR REPLACE VIEW user_tickets_view AS
+                DROP VIEW IF EXISTS user_tickets_view;  -- <== DODANA LINIA
+
+                CREATE VIEW user_tickets_view AS        -- <== ZMIANA z 'CREATE OR REPLACE' na 'CREATE'
                 SELECT
                     o.id AS order_id,
                     o.user_id,
                     o.status AS order_status,
                     o.updated_at,
-                    od."ticket_UUID",   -- <== poprawnie z cudzysłowami
+                    od."ticket_UUID",
                     t.event_id,
                     t.seat,
                     t.status AS ticket_status
@@ -25,7 +27,6 @@ class Migration(migrations.Migration):
                 JOIN orders_details od ON o.id = od.order_id
                 JOIN tickets t ON od.ticket_id = t.id
                 WHERE o.status = 'completed';
-
             """,
             reverse_sql="DROP VIEW IF EXISTS user_tickets_view;",
         )

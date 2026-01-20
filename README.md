@@ -1,4 +1,4 @@
-# 🎟️ Ticket Reservation System (Pro Edition)
+# 🎟️ Ticket Reservation System
 A robust, web-based ticket reservation system built with Django and PostgreSQL. Originally developed as a university database project, recently refactored and expanded independently to implement professional architectural patterns and modern DevOps practices.
 
 > ⚠️ Note: The payment system is **not implemented**. Tickets can be reserved and marked as sold, but no real payment gateway is integrated.

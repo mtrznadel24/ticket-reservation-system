@@ -2,52 +2,89 @@
 {% block title %}Twój koszyk{% endblock %}
 
 {% block content %}
-<h2 class="mb-4">Twój koszyk</h2>
+<div class="container py-4">
+    <h2 class="mb-4 text-center">🛒 Twój koszyk</h2>
 
-{% if order_details|length > 0 %}
-    <form method="post">
-        {% csrf_token %}
+    {% if forms_with_details %}
+        <form method="post" novalidate>
+            {% csrf_token %}
+            {{ formset.management_form }}
 
-        {% for detail in order_details %}
-            <div class="card mb-3">
-                <div class="card-header">
-                    <strong>Miejsce:</strong> {{ detail.ticket.seat }} | <strong>Cena:</strong> ${{ detail.ticket.price }}
-                </div>
-                <div class="card-body">
-                    <h5 class="card-title">Dane uczestnika dla miejsca {{ detail.ticket.seat }}</h5> {# Dodany numer miejsca dla czytelności #}
-                    <div class="row g-3">
-                        <div class="col-md-4">
-                            <label for="first_name_{{ detail.participant.id }}" class="form-label">Imię</label>
-                            <input type="text" class="form-control" id="first_name_{{ detail.participant.id }}" name="first_name_{{ detail.participant.id }}" value="{{ detail.participant.first_name }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="last_name_{{ detail.participant.id }}" class="form-label">Nazwisko</label>
-                            <input type="text" class="form-control" id="last_name_{{ detail.participant.id }}" name="last_name_{{ detail.participant.id }}" value="{{ detail.participant.last_name }}" required>
-                        </div>
-                        <div class="col-md-4">
-                            <label for="pesel_{{ detail.participant.id }}" class="form-label">PESEL</label>
-                            <input type="text" class="form-control" id="pesel_{{ detail.participant.id }}" name="pesel_{{ detail.participant.id }}" value="{{ detail.participant.pesel }}" required maxlength="11" minlength="11" pattern="[0-9]{11}" title="PESEL musi składać się z 11 cyfr.">
+            {% for detail, form in forms_with_details %}
+                <div class="card mb-4 shadow-sm">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="h5 mb-0">🎫 Miejsce: {{ detail.ticket.seat }}</span>
+                        <span class="badge bg-light text-primary fs-6">${{ detail.ticket.price }}</span>
+                    </div>
+                    <div class="card-body bg-light">
+                        <h6 class="card-subtitle mb-3 text-muted">Wprowadź dane uczestnika wydarzenia:</h6>
+
+                        <div class="row g-3">
+                            {# Pole: Imię #}
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Imię</label>
+                                <input type="text"
+                                       name="{{ form.first_name.html_name }}"
+                                       value="{{ form.first_name.value|default:'' }}"
+                                       class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                       placeholder="np. Jan">
+                                {% if form.first_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.first_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            {# Pole: Nazwisko #}
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">Nazwisko</label>
+                                <input type="text"
+                                       name="{{ form.last_name.html_name }}"
+                                       value="{{ form.last_name.value|default:'' }}"
+                                       class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                       placeholder="np. Kowalski">
+                                {% if form.last_name.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.last_name.errors.0 }}</div>
+                                {% endif %}
+                            </div>
+
+                            {# Pole: PESEL #}
+                            <div class="col-md-4">
+                                <label class="form-label fw-bold small">PESEL</label>
+                                <input type="text"
+                                       name="{{ form.pesel.html_name }}"
+                                       value="{{ form.pesel.value|default:'' }}"
+                                       class="form-control {% if form.pesel.errors %}is-invalid{% endif %}"
+                                       maxlength="11"
+                                       placeholder="11 cyfr">
+                                {% if form.pesel.errors %}
+                                    <div class="invalid-feedback d-block">{{ form.pesel.errors.0 }}</div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        {% endfor %}
+            {% endfor %}
 
-        <div class="card mb-4 bg-light shadow-sm border-primary">
-            <div class="card-body text-end">
-                <h4 class="card-title mb-0 text-dark">Łączna wartość zamówienia: <strong class="text-primary fs-3">${{ total }}</strong></h4>
+            {# Podsumowanie #}
+            <div class="card mb-4 border-primary border-2 shadow">
+                <div class="card-body d-flex justify-content-between align-items-center">
+                    <span class="h4 mb-0">Suma do zapłaty:</span>
+                    <span class="h3 mb-0 text-primary"><strong>${{ total }}</strong></span>
+                </div>
             </div>
-        </div>
 
-        <div class="d-grid gap-2 mb-5">
-            <button type="submit" class="btn btn-primary btn-lg" onclick="return confirm('Dane osobowe muszą być zgodne z osobą wchodzącą na wydarzenie.\nCzy na pewno chcesz kontynuować zakup?');">
-                Kup bilety
-            </button>
+            <div class="d-grid gap-2 mb-5">
+                <button type="submit" class="btn btn-success btn-lg shadow" onclick="return confirm('Czy na pewno chcesz sfinalizować zakup?');">
+                    ✅ Kup bilety i przejdź do podsumowania
+                </button>
+                <a href="{% url 'events' %}" class="btn btn-outline-secondary">Kontynuuj zakupy</a>
+            </div>
+        </form>
+    {% else %}
+        <div class="text-center py-5">
+            <div class="display-1 text-muted mb-4">Empty</div>
+            <p class="lead">Twój koszyk jest obecnie pusty.</p>
+            <a href="{% url 'events' %}" class="btn btn-primary px-4">Przeglądaj wydarzenia</a>
         </div>
-    </form>
-{% else %}
-    <div class="alert alert-info" role="alert">
-        Twój koszyk jest pusty.
-    </div>
-{% endif %}
+    {% endif %}
+</div>
 {% endblock %}

@@ -45,44 +45,42 @@ def reserve_tickets(user, ticket_ids):
 
     order, _ = Order.objects.get_or_create(user=user, status=Order.Status.PENDING)
 
-    for ticket_id in ticket_ids:
-        ticket = Ticket.objects.select_for_update().get(id=ticket_id)
+    tickets = list(Ticket.objects.select_for_update().filter(id__in=ticket_ids).order_by('id'))
+    tickets_to_update = []
+    order_details_to_create = []
+
+    for ticket in tickets:
+
         if ticket.status != Ticket.Status.AVAILABLE:
             raise ValidationError(f"Bilet {ticket.seat} jest już niedostępny.")
 
-        participant = Participant.objects.create(user=user)
         ticket.status = Ticket.Status.RESERVED
-        ticket.reserved_until = timezone.now() + timedelta(minutes=15)
-        ticket.save()
+        ticket.reserved_until = timezone.now() + timedelta(minutes=2)
+        tickets_to_update.append(ticket)
 
-        OrderDetails.objects.create(order=order, participant=participant, ticket=ticket)
+        order_details_to_create.append(OrderDetails(order=order, participant=None, ticket=ticket))
 
+    OrderDetails.objects.bulk_create(order_details_to_create)
+    Ticket.objects.bulk_update(tickets_to_update, ["status", "reserved_until"])
 
 @transaction.atomic
-def update_participants_details(user, post_data, order_details):
-    participants_to_update = []
-    for detail in order_details:
-        participant = detail.participant
+def update_participants_details(user, data_list, order_details):
+    participants_to_create = []
+    for data in data_list:
+        participant = Participant(
+            user=user,
+            first_name=data.get("first_name"),
+            last_name=data.get("last_name"),
+            pesel=data.get("pesel")
+        )
+        participants_to_create.append(participant)
 
-        first_name = post_data.get(f"first_name_{participant.id}", "").strip()
-        last_name = post_data.get(f"last_name_{participant.id}", "").strip()
-        pesel = post_data.get(f"pesel_{participant.id}", "").strip()
+    created_participants = Participant.objects.bulk_create(participants_to_create)
 
-        if not first_name or not last_name or not pesel:
-            raise ValidationError("Należy wypełnić wszystkie pola")
+    for detail, participant in zip(order_details, created_participants):
+        detail.participant = participant
 
-        if len(pesel) != 11:
-            raise ValidationError("Pesel powinien mieć długość 11")
-
-        participant.first_name = first_name
-        participant.last_name = last_name
-        participant.pesel = pesel
-
-        participants_to_update.append(participant)
-
-    Participant.objects.bulk_update(
-        participants_to_update, ["first_name", "last_name", "pesel"]
-    )
+    OrderDetails.objects.bulk_update(order_details, ["participant"])
 
 
 @transaction.atomic

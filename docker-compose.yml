@@ -1,6 +1,7 @@
 services:
   db:
     image: postgres:15-alpine
+    container_name: db
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -8,10 +9,17 @@ services:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
     ports:
-      - "5433:5432"
+      - "5432:5432"
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
 
   backend:
     build: .
+    container_name: backend
     command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - .:/app
@@ -21,6 +29,31 @@ services:
       - .env
     depends_on:
       - db
+      - redis
+
+  celery_worker:
+    build: .
+    container_name: celery_worker
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
+
+  celery_beat:
+    build: .
+    container_name: celery_beat
+    command: celery -A config beat --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - db
+      - redis
 
 volumes:
   postgres_data:

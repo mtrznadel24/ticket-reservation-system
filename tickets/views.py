@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Count, Q, Sum
+from django.forms import formset_factory
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.views import generic
@@ -11,7 +12,7 @@ from django.views.generic import TemplateView
 
 from .models import Ticket, Event, Order, OrderDetails
 from django.contrib.auth import login
-from .forms import CustomUserCreationForm
+from .forms import CustomUserCreationForm, ParticipantForm
 from .services import (
     reserve_tickets,
     update_participants_details,
@@ -44,7 +45,7 @@ class EventsView(generic.ListView):
 def tickets_view(request, event_id):
     event = get_object_or_404(Event, pk=event_id)
     tickets = (
-        Ticket.objects.select_for_update()
+        Ticket.objects
         .filter(event=event, status=Ticket.Status.AVAILABLE)
         .order_by("seat")
     )
@@ -85,19 +86,37 @@ def cart_view(request):
         order_details = []
         total = 0
 
+    ParticipantFormSet = formset_factory(ParticipantForm, extra=len(order_details))
+
     if request.method == "POST":
-        try:
-            update_participants_details(request.user, request.POST, order_details)
-            return redirect("finalize_cart")
-        except ValidationError as e:
-            messages.error(request, str(e.message))
-        except Exception as e:
-            messages.error(request, str(e))
+        formset = ParticipantFormSet(request.POST)
+        if formset.is_valid():
+            try:
+                update_participants_details(request.user, formset.cleaned_data, order_details)
+                return redirect("finalize_cart")
+            except ValidationError as e:
+                messages.error(request, str(e.message))
+            except Exception as e:
+                messages.error(request, str(e))
+        else:
+            messages.error(request, "Błędy w formularzu")
+    else:
+        initial_data = [
+            {
+                'first_name': d.participant.first_name if d.participant else '',
+                'last_name': d.participant.last_name if d.participant else '',
+                'pesel': d.participant.pesel if d.participant else '',
+            }
+            for d in order_details
+        ]
+        formset = ParticipantFormSet(initial=initial_data)
+
+    forms_with_details = list(zip(order_details, formset))
 
     return render(
         request,
         "tickets/cart.html",
-        {"order": order, "order_details": order_details, "total": total},
+        {"order": order, "total": total, 'formset': formset, "forms_with_details": forms_with_details},
     )
 
 

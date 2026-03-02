@@ -24,6 +24,7 @@ def generate_tickets_pdf_task(order_id):
         tickets_data = [{
             'event_name': f"{d.ticket.event.name}",
             'name': f"{d.participant.first_name} {d.participant.last_name}",
+            'seat': f"{d.ticket.seat}",
             'uuid': f"{d.ticket_uuid}"
         } for d in order_details]
 

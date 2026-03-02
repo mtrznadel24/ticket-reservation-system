@@ -3,87 +3,113 @@
 
 {% block content %}
 <div class="container py-4">
-    <h2 class="mb-4 text-center">🛒 Twój koszyk</h2>
+    <h2 class="mb-4 fw-bold">🛒 Twój koszyk</h2>
 
     {% if forms_with_details %}
         <form method="post" novalidate>
             {% csrf_token %}
             {{ formset.management_form }}
 
-            {% for detail, form in forms_with_details %}
-                <div class="card mb-4 shadow-sm">
-                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                        <span class="h5 mb-0">🎫 Miejsce: {{ detail.ticket.seat }}</span>
-                        <span class="badge bg-light text-primary fs-6">${{ detail.ticket.price }}</span>
-                    </div>
-                    <div class="card-body bg-light">
-                        <h6 class="card-subtitle mb-3 text-muted">Wprowadź dane uczestnika wydarzenia:</h6>
+            <div class="row">
+                <div class="col-lg-8 mb-4">
+                    {% for detail, form in forms_with_details %}
+                        <div class="card mb-4 shadow-sm border-0">
+                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                <span class="h5 mb-0"><i class="bi bi-ticket-perforated"></i> Bilet na: {{ detail.ticket.event.name }}</span>
+                                <span class="badge bg-light text-primary fs-6">${{ detail.ticket.price }}</span>
+                            </div>
+                            <div class="card-body bg-light">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <h6 class="card-subtitle text-muted mb-0">Wprowadź dane uczestnika:</h6>
+                                    <span class="badge bg-secondary">Miejsce: {{ detail.ticket.seat }}</span>
+                                </div>
 
-                        <div class="row g-3">
-                            {# Pole: Imię #}
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold small">Imię</label>
-                                <input type="text"
-                                       name="{{ form.first_name.html_name }}"
-                                       value="{{ form.first_name.value|default:'' }}"
-                                       class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
-                                       placeholder="np. Jan">
-                                {% if form.first_name.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.first_name.errors.0 }}</div>
-                                {% endif %}
+                                <div class="row g-3">
+                                    {# Pole: Imię #}
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold small">Imię</label>
+                                        <input type="text"
+                                               name="{{ form.first_name.html_name }}"
+                                               value="{{ form.first_name.value|default:'' }}"
+                                               class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                               placeholder="np. Jan">
+                                        {% if form.first_name.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.first_name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    {# Pole: Nazwisko #}
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold small">Nazwisko</label>
+                                        <input type="text"
+                                               name="{{ form.last_name.html_name }}"
+                                               value="{{ form.last_name.value|default:'' }}"
+                                               class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                               placeholder="np. Kowalski">
+                                        {% if form.last_name.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.last_name.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+
+                                    {# Pole: PESEL #}
+                                    <div class="col-md-4">
+                                        <label class="form-label fw-bold small">PESEL</label>
+                                        <input type="text"
+                                               name="{{ form.pesel.html_name }}"
+                                               value="{{ form.pesel.value|default:'' }}"
+                                               class="form-control {% if form.pesel.errors %}is-invalid{% endif %}"
+                                               maxlength="11"
+                                               placeholder="11 cyfr">
+                                        {% if form.pesel.errors %}
+                                            <div class="invalid-feedback d-block">{{ form.pesel.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <div class="col-lg-4">
+                    <div class="card border-primary border-2 shadow-lg position-sticky" style="top: 2rem;">
+                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0 text-center">
+                            <h4 class="fw-bold">Podsumowanie</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="text-muted">Liczba biletów:</span>
+                                <span class="fw-bold">{{ forms_with_details|length }}</span>
                             </div>
 
-                            {# Pole: Nazwisko #}
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold small">Nazwisko</label>
-                                <input type="text"
-                                       name="{{ form.last_name.html_name }}"
-                                       value="{{ form.last_name.value|default:'' }}"
-                                       class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
-                                       placeholder="np. Kowalski">
-                                {% if form.last_name.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.last_name.errors.0 }}</div>
-                                {% endif %}
+                            <hr>
+
+                            <div class="d-flex justify-content-between align-items-center mb-4">
+                                <span class="h5 mb-0">Do zapłaty:</span>
+                                <span class="h3 mb-0 text-primary fw-bold">${{ total }}</span>
                             </div>
 
-                            {# Pole: PESEL #}
-                            <div class="col-md-4">
-                                <label class="form-label fw-bold small">PESEL</label>
-                                <input type="text"
-                                       name="{{ form.pesel.html_name }}"
-                                       value="{{ form.pesel.value|default:'' }}"
-                                       class="form-control {% if form.pesel.errors %}is-invalid{% endif %}"
-                                       maxlength="11"
-                                       placeholder="11 cyfr">
-                                {% if form.pesel.errors %}
-                                    <div class="invalid-feedback d-block">{{ form.pesel.errors.0 }}</div>
-                                {% endif %}
+                            <div class="d-grid gap-3">
+                                <button type="submit" class="btn btn-success btn-lg shadow-sm" onclick="return confirm('Czy na pewno chcesz sfinalizować zakup?');">
+                                    <i class="bi bi-credit-card"></i> Przejdź do płatności
+                                </button>
+                                <a href="{% url 'events' %}" class="btn btn-outline-secondary">
+                                    Dobierz więcej biletów
+                                </a>
+                            </div>
+
+                            <div class="mt-3 text-center small text-muted">
+                                <i class="bi bi-shield-lock"></i> Bezpieczna transakcja. Rezerwacja wygasa za 15 minut.
                             </div>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
-
-            {# Podsumowanie #}
-            <div class="card mb-4 border-primary border-2 shadow">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <span class="h4 mb-0">Suma do zapłaty:</span>
-                    <span class="h3 mb-0 text-primary"><strong>${{ total }}</strong></span>
-                </div>
-            </div>
-
-            <div class="d-grid gap-2 mb-5">
-                <button type="submit" class="btn btn-success btn-lg shadow" onclick="return confirm('Czy na pewno chcesz sfinalizować zakup?');">
-                    ✅ Kup bilety i przejdź do podsumowania
-                </button>
-                <a href="{% url 'events' %}" class="btn btn-outline-secondary">Kontynuuj zakupy</a>
             </div>
         </form>
     {% else %}
         <div class="text-center py-5">
-            <div class="display-1 text-muted mb-4">Empty</div>
+            <div class="display-1 text-muted mb-4">🛒</div>
             <p class="lead">Twój koszyk jest obecnie pusty.</p>
-            <a href="{% url 'events' %}" class="btn btn-primary px-4">Przeglądaj wydarzenia</a>
+            <a href="{% url 'events' %}" class="btn btn-primary px-4 btn-lg mt-3">Przeglądaj wydarzenia</a>
         </div>
     {% endif %}
 </div>

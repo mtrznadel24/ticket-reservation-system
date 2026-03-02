@@ -33,11 +33,11 @@ class EventsView(generic.ListView):
         now = timezone.now()
 
         return (
-            Event.objects.filter(event_date__gt=now)
+            Event.objects.filter(start_datetime__gt=now)
             .annotate(
                 available_count=Count("ticket", filter=Q(ticket__status="available"))
             )
-            .order_by("event_date")
+            .order_by("start_datetime")
         )
 
 
@@ -179,6 +179,18 @@ def order_details(request, order_id):
     return render(
         request, "tickets/order_details.html", {"order": order, "details": details}
     )
+
+@login_required
+def my_tickets(request):
+    details = (OrderDetails.active
+               .for_user(request.user)
+               .completed()
+               .usable()
+               .select_related("ticket", "participant", "order")
+               .order_by("ticket__event__start_datetime"))
+
+    return render(request, "tickets/my_tickets.html", {"details": details})
+
 
 
 @require_POST

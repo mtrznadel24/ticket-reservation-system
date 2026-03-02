@@ -5,6 +5,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from tickets.models import Order, Ticket, Participant, OrderDetails
+from tickets.tasks import generate_tickets_pdf_task
 
 
 @transaction.atomic
@@ -36,6 +37,7 @@ def unlock_expired_tickets():
         ):
             order.status = Order.Status.CANCELED
             order.save()
+
 
 
 @transaction.atomic
@@ -100,6 +102,8 @@ def finalize_order(order):
     order.status = Order.Status.COMPLETED
     order.updated_at = timezone.now()
     order.save()
+
+    generate_tickets_pdf_task.delay_on_commit(order.id)
 
 
 @transaction.atomic

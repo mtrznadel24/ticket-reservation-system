@@ -1,13 +1,15 @@
 import uuid
+from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Sum
+from django.utils import timezone
 
 
 class Event(models.Model):
     name = models.CharField(max_length=64)
-    event_date = models.DateField()
+    start_datetime = models.DateTimeField()
 
     def __str__(self):
         return self.name
@@ -49,6 +51,18 @@ class Participant(models.Model):
         db_table = "participants"
 
 
+class ActiveTicketsQuerySet(models.QuerySet):
+    def for_user(self, user):
+        return self.filter(order__user=user)
+
+    def completed(self):
+        return self.filter(order__status=Order.Status.COMPLETED)
+
+    def usable(self):
+        now = timezone.now()
+        buffer_time = now - timedelta(hours=6)
+        return self.filter(ticket__event__start_datetime__gte=buffer_time)
+
 class Order(models.Model):
     class Status(models.TextChoices):
         PENDING = "pending", "Pending"
@@ -59,6 +73,7 @@ class Order(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    tickets_pdf = models.FileField(upload_to="tickets_pdfs", null=True, blank=True)
 
     def __str__(self):
         return f"Order {self.id}"
@@ -77,7 +92,12 @@ class OrderDetails(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     participant = models.ForeignKey(Participant, null=True, blank=True, on_delete=models.CASCADE)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
-    ticket_UUID = models.UUIDField(default=uuid.uuid4, editable=False)
+    ticket_uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    is_scanned = models.DateTimeField(null=True, blank=True)
+
+
+    objects = models.Manager()
+    active = ActiveTicketsQuerySet.as_manager()
 
     def __str__(self):
         return f"Order by {self.participant} for ticket {self.ticket}"

@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block title %}Moje Bilety{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h2 class="fw-bold">🎫 Twoje Aktywne Bilety</h2>
+        <span class="badge bg-dark px-3 py-2">Aktywne: {{ details.count }}</span>
+    </div>
+
+    <div class="row">
+        {% for detail in details %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 shadow-sm border-0 ticket-card">
+                <div class="card-header bg-primary text-white py-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-uppercase fw-bold">{{ detail.ticket.event.start_datetime|date:"d M Y" }}</small>
+                        <small>{{ detail.ticket.event.start_datetime|date:"H:i" }}</small>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-3">{{ detail.ticket.event.name }}</h5>
+
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <small class="text-muted d-block">Uczestnik</small>
+                            <span class="fw-medium">{{ detail.participant.first_name }} {{ detail.participant.last_name }}</span>
+                        </div>
+                        <div class="col-6 text-end">
+                            <small class="text-muted d-block">Miejsce</small>
+                            <span class="badge bg-light text-dark border">Sektor {{ detail.ticket.seat }}</span>
+                        </div>
+                    </div>
+
+                    <div class="bg-light p-2 rounded mb-3 text-center">
+                        <code class="small text-muted">{{ detail.ticket_uuid }}</code>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#qrModal{{ detail.id }}">
+                            <i class="bi bi-qr-code"></i> Pokaż kod QR
+                        </button>
+
+                        {% if detail.order.tickets_pdf %}
+                            <a href="{{ detail.order.tickets_pdf.url }}" class="btn btn-outline-primary" target="_blank">
+                                <i class="bi bi-file-earmark-pdf"></i> Pobierz PDF (Zamówienie #{{ detail.order.id }})
+                            </a>
+                        {% else %}
+                            <button class="btn btn-outline-secondary disabled">
+                                <span class="spinner-border spinner-border-sm"></span> Generowanie PDF...
+                            </button>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="qrModal{{ detail.id }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center py-4">
+                    <div class="modal-body">
+                        <h4>{{ detail.ticket.event.name }}</h4>
+                        <p class="text-muted">Bilet dla: {{ detail.participant.first_name }} {{ detail.participant.last_name }}</p>
+
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ detail.ticket_uuid }}"
+                             alt="QR Code" class="img-fluid my-3 shadow-sm p-2 bg-white">
+
+                        <p class="mt-2 small text-uppercase fw-bold">Zeskanuj przy wejściu</p>
+                        <button type="button" class="btn btn-secondary mt-3" data-bs-dismiss="modal">Zamknij</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5">
+            <h3 class="text-muted">Brak aktywnych biletów.</h3>
+            <a href="{% url 'events' %}" class="btn btn-primary mt-3">Przeglądaj wydarzenia</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .ticket-card {
+        transition: transform 0.2s;
+        border-radius: 15px;
+        overflow: hidden;
+    }
+    .ticket-card:hover {
+        transform: translateY(-5px);
+    }
+    .card-header {
+        border-bottom: 2px dashed rgba(255,255,255,0.3);
+    }
+</style>
+{% endblock %}

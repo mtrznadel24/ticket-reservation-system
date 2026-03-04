@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Płatność zakończona sukcesem{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <div class="card shadow-lg border-0">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 5rem;"></i>
+                    </div>
+                    
+                    <h1 class="fw-bold mb-3">Dziękujemy za zakup!</h1>
+                    <p class="lead text-muted mb-4">
+                        Twoja płatność została pomyślnie przetworzona. <br>
+                        Zamówienie <strong>#{{ order_id }}</strong> zostało sfinalizowane.
+                    </p>
+
+                    <div class="alert alert-info border-0 shadow-sm mb-5">
+                        <div class="d-flex align-items-center justify-content-center">
+                            <div class="spinner-border spinner-border-sm text-info me-3" role="status"></div>
+                            <span>Trwa generowanie Twoich biletów PDF...</span>
+                        </div>
+                        <p class="small mt-2 mb-0">Zajmie to tylko chwilę. Po zakończeniu znajdziesz je w zakładce <strong>Moje bilety</strong>.</p>
+                    </div>
+
+                    <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                        <a href="{% url 'my_tickets' %}" class="btn btn-primary btn-lg px-4 gap-3">
+                            <i class="bi bi-ticket-detailed"></i> Moje bilety
+                        </a>
+                        <a href="{% url 'events' %}" class="btn btn-outline-secondary btn-lg px-4">
+                            Przeglądaj wydarzenia
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="mt-4 text-muted small">
+                Potwierdzenie zakupu oraz bilety zostaną również wysłane na Twój adres e-mail.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

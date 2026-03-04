@@ -7,7 +7,7 @@ from .utils.pdf_generator import draw_tickets_to_buffer
 
 @shared_task(name="cleanup_reservations_task")
 def cleanup_reservations_task():
-    from .services import unlock_expired_tickets
+    from tickets.services.order_logic import unlock_expired_tickets
     unlock_expired_tickets()
 
 @shared_task

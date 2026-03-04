@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from tickets.services import unlock_expired_tickets
+from tickets.services.order_logic import unlock_expired_tickets
 
 
 class Command(BaseCommand):

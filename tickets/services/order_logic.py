@@ -86,7 +86,12 @@ def update_participants_details(user, data_list, order_details):
 
 
 @transaction.atomic
-def finalize_order(order):
+def finalize_order(order_id):
+    order = Order.objects.select_for_update().get(id=order_id)
+
+    if order.status != Order.Status.PENDING:
+        return
+
     order_details = OrderDetails.objects.filter(order=order).select_related(
         "ticket", "participant"
     )
@@ -103,7 +108,7 @@ def finalize_order(order):
     order.updated_at = timezone.now()
     order.save()
 
-    generate_tickets_pdf_task.delay_on_commit(order.id)
+    generate_tickets_pdf_task.delay_on_commit(order_id)
 
 
 @transaction.atomic

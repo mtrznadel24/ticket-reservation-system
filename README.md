@@ -6,14 +6,14 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
 
-# 🎟️ Ticket Reservation System
+# Ticket Reservation System
 A robust, web-based ticket reservation system built with Django and PostgreSQL. Originally developed as a university database project, recently refactored and expanded independently to implement professional architectural patterns and modern DevOps practices.
 
-> ⚠️ Note: The payment system is **not implemented**. Tickets can be reserved and marked as sold, but no real payment gateway is integrated.
+> ⚠️ Note: System is using Stripe in test mode. No real funds are moved.
 
 ---
 
-## 📖 Project Background & Evolution
+## Project Background & Evolution
 This project originated as a 2-person university assignment for a Database Systems course. I decided to refactor the code to transform it from a simple academic task into a professional-grade application.
 
 ### Key Refactoring Milestones:
@@ -29,11 +29,11 @@ This project originated as a 2-person university assignment for a Database Syste
 
 * Automated Lifecycle Management: Implemented Celery Beat to orchestrate periodic tasks, replacing manual cleanup with a reliable, scheduled system.
 
-*
+* Payment Integration: Used Stripe API (Test Mode) for payment processing. Implemented Webhooks to handle asynchronous order confirmation.
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 - **Backend:** Django (Python), Celery (Background tasks)
 - **Infrastructure:** PostgreSQL, Redis
@@ -42,49 +42,61 @@ This project originated as a 2-person university assignment for a Database Syste
 - **Auth:** Django built-in authentication
 - **ORM:** Django ORM
 - **Tooling:** Ruff, Poetry
+- **Payment Gateway:** Stripe
 
 ---
 
-## 🚀 Features & Business Logic
+## Features & Business Logic
 
 
 ### User Experience
-* Smart Event Browsing: Optimized listing of upcoming events with real-time ticket availability counting (database-level).
+* **Smart Event Browsing:** Optimized listing of upcoming events with real-time ticket availability counting (database-level).
 
-* Secure Reservation: Multi-ticket selection with a 15-minute window before seats are automatically released.
+* **Secure Reservation:** Multi-ticket selection with a 15-minute window before seats are automatically released.
 
-* Enhanced Shopping Cart: Dedicated view for inputting specific participant data (First Name, Last Name, PESEL) for each ticket.
+* **Enhanced Shopping Cart:** Dedicated view for inputting specific participant data (First Name, Last Name, PESEL) for each ticket.
 
-* Order Management: Full order history for registered users, detailed order tracking, and a cancellation system that resets ticket availability.
+* **Order Management:** Full order history for registered users, detailed order tracking, and a cancellation system that resets ticket availability.
 
-* Responsive UI: Fully mobile-friendly interface built with Bootstrap 5.
+* **Responsive UI:** Fully mobile-friendly interface built with Bootstrap 5.
 
 ### Technical Excellence 
-* Service Layer Architecture: Business logic is entirely decoupled from Django views, ensuring high maintainability and testability.
+* **Service Layer Architecture:** Business logic is entirely decoupled from Django views, ensuring high maintainability and testability.
 
-* Database Optimization: Eliminated N+1 query problems using strategic annotate, select_related, and Count/Sum aggregations.
+* **Database Optimization:** Eliminated N+1 query problems using strategic annotate, select_related, and Count/Sum aggregations.
 
-* Concurrency Protection: Implemented Row-Level Locking (select_for_update) to ensure no two users can reserve the same seat simultaneously.
+* **Concurrency Protection:** Implemented Row-Level Locking (select_for_update) to ensure no two users can reserve the same seat simultaneously.
 
-* Data Integrity: Used Atomic Transactions to ensure that multi-step processes (like finalizing an order) either complete fully or roll back on error.
+* **Data Integrity:** Used Atomic Transactions to ensure that multi-step processes (like finalizing an order) either complete fully or roll back on error.
 
-* Maintenance Automation: Custom Django Management Command (cleanup_reservations) to handle database cleanup, ready for Cron or Celery scheduling.
+* **Maintenance Automation:** Custom Django Management Command (cleanup_reservations) to handle database cleanup, ready for Cron or Celery scheduling.
+
+* **Secure Checkout Flow:** Integrated Stripe API with custom success/cancel redirection logic and session metadata handling.
+
+* **Asynchronous Order Fulfillment:** Implemented Stripe Webhooks to listen for `checkout.session.completed` events. This ensures that tickets are only marked as "Sold" and generated (PDF) after a verified payment confirmation from the provider.
 
 ### Asynchronous Operations
 
-* Non-blocking PDF Generation: Tickets are generated in the background. Users can continue browsing while a distributed worker handles the PDF creation and QR code embedding.
+* **Non-blocking PDF Generation:** Tickets are generated in the background. Users can continue browsing while a distributed worker handles the PDF creation and QR code embedding.
 
-* Instant QR Visualization: Integrated dynamic QR code rendering in the user dashboard for seamless mobile check-ins without downloading files.
+* **Instant QR Visualization:** Integrated dynamic QR code rendering in the user dashboard for seamless mobile check-ins without downloading files.
 
 ### Automation & Maintenance
 
-* Automated Reservation Cleanup: A background scheduler (Celery Beat) monitors the database every minute to release expired 15-minute seat reservations, ensuring maximum ticket availability.
+* **Automated Reservation Cleanup:** A background scheduler (Celery Beat) monitors the database every minute to release expired 15-minute seat reservations, ensuring maximum ticket availability.
 
-* Reliable Task Execution: Used transaction.on_commit to ensure background tasks are only queued after successful database commits, preventing race conditions.
+* **Reliable Task Execution:** Used transaction.on_commit to ensure background tasks are only queued after successful database commits, preventing race conditions.
+
+### Security & Data Privacy
+
+* **Sensitive Data Encryption:** Implemented application-level encryption for personal identifiers (PESEL) using `django-encrypted-model-fields` (AES-256 via Fernet). Even with full database access, sensitive data remains unreadable without the unique `FIELD_ENCRYPTION_KEY`.
+
+* **Secure Environment Management:** Decoupled sensitive credentials (DB passwords, Encryption keys, Stripe secrets) from the codebase using Docker environment variables and `.env` files.
+
 
 ---
 
-## 🛠️ Installation & Running
+## Installation & Running
 The easiest way to run the project is using Docker:
 
 1. Clone the repository:
@@ -103,12 +115,7 @@ docker compose exec backend python manage.py migrate
 ```
 The app will be available at http://localhost:8000.
 
-## 🗺️ Roadmap (Future Enhancements)
-* [ ] Data Security: Hashing/Encoding of sensitive participant data (PESEL) before database storage.
-
-* [ ] Payment Integration: Mocking a payment gateway (e.g., Stripe/PayU integration).
-
-## 👥 Authors
+## Authors
 
 - [Maciej Trznadel](https://github.com/mtrznadel24) - Developer, Architect, Refactoring & DevOps
 - [Patryk Blacha](https://github.com/PatrykBlacha) - Orginal project collabolator

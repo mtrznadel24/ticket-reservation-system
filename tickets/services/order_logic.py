@@ -67,22 +67,20 @@ def reserve_tickets(user, ticket_ids):
 
 @transaction.atomic
 def update_participants_details(user, data_list, order_details):
-    participants_to_create = []
-    for data in data_list:
-        participant = Participant(
-            user=user,
-            first_name=data.get("first_name"),
-            last_name=data.get("last_name"),
-            pesel=data.get("pesel")
-        )
-        participants_to_create.append(participant)
+    for data, detail in zip(data_list, order_details):
 
-    created_participants = Participant.objects.bulk_create(participants_to_create)
-
-    for detail, participant in zip(order_details, created_participants):
-        detail.participant = participant
-
-    OrderDetails.objects.bulk_update(order_details, ["participant"])
+        if detail.participant:
+            participant = detail.participant
+            participant.first_name = data.get("first_name")
+            participant.last_name = data.get("last_name")
+            participant.pesel = data.get("pesel")
+            participant.save()
+        else:
+            detail.participant = Participant.objects.create(
+                user=user,
+                **data
+            )
+            detail.save()
 
 
 @transaction.atomic

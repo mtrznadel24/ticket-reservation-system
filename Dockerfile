@@ -8,6 +8,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     libpq-dev \
     gcc \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 RUN pip install poetry
@@ -20,5 +21,9 @@ RUN poetry config virtualenvs.create false \
 COPY . /app/
 
 EXPOSE 8000
+
+RUN chmod +x /app/scripts/entrypoint.sh
+
+ENTRYPOINT ["/app/scripts/entrypoint.sh"]
 
 CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]

@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.db.models import Sum
 from django.utils import timezone
+from encrypted_model_fields.fields import EncryptedCharField
 
 
 class Event(models.Model):
@@ -41,7 +42,7 @@ class Ticket(models.Model):
 class Participant(models.Model):
     first_name = models.CharField(max_length=64, null=True, blank=True)
     last_name = models.CharField(max_length=64, null=True, blank=True)
-    pesel = models.CharField(max_length=11, null=True, blank=True)
+    pesel = EncryptedCharField(models.CharField(null=True, blank=True))
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):

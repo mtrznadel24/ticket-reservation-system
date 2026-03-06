@@ -64,8 +64,8 @@
                         <h4>{{ detail.ticket.event.name }}</h4>
                         <p class="text-muted">Bilet dla: {{ detail.participant.first_name }} {{ detail.participant.last_name }}</p>
 
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ detail.ticket_uuid }}"
-                             alt="QR Code" class="img-fluid my-3 shadow-sm p-2 bg-white">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ request.scheme }}://{{ request.get_host }}{% url 'scan_ticket' detail.ticket_uuid %}"
+                            alt="QR Code" class="img-fluid my-3 shadow-sm p-2 bg-white">
 
                         <p class="mt-2 small text-uppercase fw-bold">Zeskanuj przy wejściu</p>
                         <button type="button" class="btn btn-secondary mt-3" data-bs-dismiss="modal">Zamknij</button>

@@ -24,9 +24,12 @@ class Ticket(models.Model):
         AVAILABLE = "available", "Available"
         RESERVED = "reserved", "Reserved"
         SOLD = "sold", "Sold"
+        SCANNED = "scanned", "Scanned"
 
     event = models.ForeignKey(Event, on_delete=models.CASCADE)
-    seat = models.IntegerField()
+    sector = models.CharField(max_length=16)
+    row = models.CharField(max_length=16)
+    seat = models.CharField(max_length=16)
     price = models.DecimalField(max_digits=8, decimal_places=2)
     status = models.CharField(max_length=16, choices=Status, default=Status.AVAILABLE)
     reserved_until = models.DateTimeField(null=True, blank=True)
@@ -36,13 +39,16 @@ class Ticket(models.Model):
 
     class Meta:
         db_table = "tickets"
-        unique_together = ("event", "seat")
+        unique_together = ("event", "sector", "row", "seat")
+        permissions = [
+            ("can_scan_ticket", "Can verify and scan event tickets"),
+        ]
 
 
 class Participant(models.Model):
     first_name = models.CharField(max_length=64, null=True, blank=True)
     last_name = models.CharField(max_length=64, null=True, blank=True)
-    pesel = EncryptedCharField(models.CharField(null=True, blank=True))
+    pesel = EncryptedCharField(max_length=11, null=True, blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -94,7 +100,7 @@ class OrderDetails(models.Model):
     participant = models.ForeignKey(Participant, null=True, blank=True, on_delete=models.CASCADE)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     ticket_uuid = models.UUIDField(default=uuid.uuid4, editable=False)
-    is_scanned = models.DateTimeField(null=True, blank=True)
+    scanned_at = models.DateTimeField(null=True, blank=True)
 
 
     objects = models.Manager()

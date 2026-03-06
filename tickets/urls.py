@@ -14,4 +14,6 @@ urlpatterns = [
     path("success/<int:order_id>/", views.payment_success, name="payment_success"),
     path("cancel/", views.payment_cancelled, name="payment_cancelled"),
     path("stripe/webhook/", views.stripe_webhook, name="stripe_webhook"),
+    path("scan/", views.scan_preview, name="scan_preview"),
+    path("scan/<uuid:ticket_uuid>/", views.scan_ticket_view, name="scan_ticket"),
 ]

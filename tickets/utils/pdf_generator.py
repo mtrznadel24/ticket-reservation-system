@@ -1,5 +1,6 @@
 from io import BytesIO
 
+from django.conf import settings
 from reportlab.lib.colors import HexColor
 from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
@@ -48,17 +49,21 @@ def draw_tickets_to_buffer(tickets_data):
         p.drawString(box_x + 20, box_y + box_h - 35, f"WYDARZENIE: {data['event_name']}")
 
         p.setFont("Helvetica", 12)
-        p.drawString(box_x + 20, box_y + box_h - 65, f"Uczestnik: {data['name']}")
+        p.drawString(box_x + 20, box_y + box_h - 60, f"Uczestnik: {data['name']}")
+
+        p.setFont("Helvetica-Bold", 12)
+        p.setFillColor(HexColor("#E74C3C"))
+        p.drawString(box_x + 20, box_y + box_h - 80, f"SEKTOR: {data['sector']}   |   RZĄD: {data['row']}")
 
         p.setFont("Helvetica-Bold", 14)
-        p.setFillColor(HexColor("#E74C3C"))
-        p.drawString(box_x + 20, box_y + box_h - 85, f"MIEJSCE: {data['seat']}")
+        p.drawString(box_x + 20, box_y + box_h - 100, f"MIEJSCE: {data['seat']}")
 
         p.setFillColor(HexColor("#7F8C8D"))
         p.setFont("Helvetica-Oblique", 8)
         p.drawString(box_x + 20, box_y + 15, f"ID: {data['uuid']}")
 
-        qr = qrcode.make(data['uuid'])
+        qr_url = f"{settings.SITE_URL}/scan/{data['uuid']}/"
+        qr = qrcode.make(qr_url)
         qr_size = 100
         qr_x = box_x + box_w - 120
         qr_y = box_y + (box_h - qr_size) / 2

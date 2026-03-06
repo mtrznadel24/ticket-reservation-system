@@ -10,7 +10,7 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 from django.views import generic
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -238,6 +238,46 @@ def payment_success(request, order_id):
 def payment_cancelled(request):
 
     return render(request, "tickets/payment_cancelled.html")
+
+@login_required
+@permission_required('tickets.can_scan_ticket', raise_exception=True)
+def scan_preview(request):
+    return render(request, "tickets/scan_preview.html")
+
+
+@login_required
+@permission_required('tickets.can_scan_ticket', raise_exception=True)
+def scan_ticket_view(request, ticket_uuid):
+
+    detail = get_object_or_404(OrderDetails.objects.select_related('ticket', 'participant', 'ticket__event'), ticket_uuid=ticket_uuid)
+
+    if request.method == "POST":
+        if detail.scanned_at:
+            messages.error(request, "Ticket already scanned.")
+            return redirect("scan_ticket", ticket_uuid=ticket_uuid)
+
+        detail.scanned_at = timezone.now()
+        detail.save()
+        detail.ticket.status = Ticket.Status.SCANNED
+        detail.ticket.save()
+
+        messages.success(request, "Ticket scanned.")
+
+        return redirect("scan_ticket", ticket_uuid=ticket_uuid)
+
+    pesel = detail.participant.pesel
+    masked_pesel = ""
+
+    if pesel and len(pesel) == 11:
+        masked_pesel = f"{pesel[:6]}***{pesel[-2:]}"
+
+    context = {
+        "detail": detail,
+        "masked_pesel": masked_pesel
+    }
+
+    return render(request, "tickets/scan_ticket.html", context)
+
 
 
 @csrf_exempt

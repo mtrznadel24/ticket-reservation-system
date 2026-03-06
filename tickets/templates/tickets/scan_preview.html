@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Skaner Bramkowy{% endblock %}
+
+{% block content %}
+<div class="container text-center mt-4 max-w-sm mx-auto" style="max-width: 500px;">
+    <h2>Skaner Biletów</h2>
+    <p class="text-muted">Nakieruj aparat na kod QR klienta</p>
+
+    <div id="reader" width="100%" class="shadow-sm border rounded bg-light mb-3"></div>
+
+    <div id="result" class="alert alert-info" style="display: none;">
+        Skanowanie...
+    </div>
+</div>
+
+<script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+
+<script>
+    function onScanSuccess(decodedText, decodedResult) {
+        html5QrcodeScanner.clear();
+
+        document.getElementById('result').style.display = 'block';
+        document.getElementById('result').innerText = "Znaleziono kod! Przekierowywanie...";
+
+        window.location.href = decodedText;
+    }
+
+    function onScanFailure(error) {
+    }
+
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: {width: 250, height: 250} },
+        /* verbose= */ false);
+    
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+</script>
+{% endblock %}

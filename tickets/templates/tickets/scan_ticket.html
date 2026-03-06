@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Skaner Biletów{% endblock %}
+
+{% block content %}
+<div class="container mt-4 max-w-sm mx-auto" style="max-width: 500px;">
+    
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show text-center fw-bold" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <div class="card shadow-sm border-0">
+        <div class="card-header text-center text-white {% if detail.scanned_at %}bg-danger{% else %}bg-primary{% endif %} py-3">
+            <h4 class="mb-0">WERYFIKACJA BILETU</h4>
+        </div>
+        
+        <div class="card-body text-center">
+            <h5 class="text-muted mb-1">{{ detail.ticket.event.name }}</h5>
+            
+            <hr>
+            
+            <p class="mb-1 text-uppercase text-muted small">Uczestnik</p>
+            <h2 class="mb-3">{{ detail.participant.first_name }} {{ detail.participant.last_name }}</h2>
+
+            <p class="text-secondary fw-bold mb-3">
+                PESEL: <span class="badge bg-secondary fs-6">{{ masked_pesel }}</span>
+            </p>
+            
+            <div class="bg-light rounded p-3 mb-4">
+                <div class="row text-center text-danger fw-bold fs-5">
+                    <div class="col-4">
+                        <small class="d-block text-muted text-uppercase fs-6">Sektor</small>
+                        {{ detail.ticket.sector }}
+                    </div>
+                    <div class="col-4 border-start border-end">
+                        <small class="d-block text-muted text-uppercase fs-6">Rząd</small>
+                        {{ detail.ticket.row }}
+                    </div>
+                    <div class="col-4">
+                        <small class="d-block text-muted text-uppercase fs-6">Miejsce</small>
+                        {{ detail.ticket.seat }}
+                    </div>
+                </div>
+            </div>
+
+            {% if detail.scanned_at %}
+                <div class="alert alert-danger fw-bold fs-5">
+                    BILET JUŻ ZESKANOWANY!<br>
+                    <small class="fw-normal">{{ detail.scanned_at|date:"d.m.Y H:i:s" }}</small>
+                </div>
+                <a href="{% url 'scan_preview' %}" class="btn btn-secondary w-100 btn-lg">Skanuj kolejny bilet</a>
+            {% else %}
+                <form method="POST" action="">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-lg w-100 mb-3 py-3 fw-bold fs-5">
+                        ZATWIERDŹ WEJŚCIE
+                    </button>
+                </form>
+                
+                <a href="{% url 'scan_preview' %}" class="btn btn-outline-danger w-100 btn-lg mb-2">ODRZUĆ / BŁĘDNE DANE</a>
+            {% endif %}
+
+        </div>
+        <div class="card-footer text-muted text-center small">
+            ID: {{ detail.ticket_uuid }}
+        </div>
+    </div>
+</div>
+{% endblock %}

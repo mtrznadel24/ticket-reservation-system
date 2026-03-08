@@ -32,8 +32,23 @@
         {% for event in events %}
             <div class="col-md-6 col-lg-4">
                 <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden event-card">
-                    <div class="bg-dark text-white p-4 text-center position-relative" style="height: 140px; background: linear-gradient(45deg, #212529 0%, #343a40 100%);">
-                        <i class="bi bi-music-note-beamed display-5 opacity-50"></i>
+                    <div class="position-relative overflow-hidden" style="height: 160px;">
+                        {% if event.image %}
+                            <img src="{{ event.image.url }}" class="w-100 h-100 object-fit-cover event-img-zoom" alt="{{ event.name }}">
+                        {% else %}
+                            <div class="w-100 h-100 d-flex align-items-center justify-content-center p-3 position-relative overflow-hidden bg-dark"
+                                 style="background: linear-gradient(135deg, #1a1c1e 0%, #0d6efd 100%); min-height: 160px;">
+
+                                <i class="bi bi-ticket-perforated position-absolute text-white opacity-40"
+                                   style="font-size: 6rem; right: -15px; bottom: -20px; z-index: 0;"></i>
+
+                                <div class="fs-3 fw-bold text-white opacity-25 text-center" style="z-index: 1;">
+                                    {{ event.name|upper }}
+                                </div>
+
+                            </div>
+                        {% endif %}
+
                         <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-primary shadow-sm">
                             Upcoming
                         </span>
@@ -52,7 +67,7 @@
                         <h4 class="card-title fw-bold mb-3">{{ event.name }}</h4>
 
                         <p class="card-text text-muted mb-4 small">
-                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Main Arena, City Center<br>
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{event.location}}<br>
                             <i class="bi bi-ticket-perforated-fill text-success me-1"></i>
                             {{ event.available_count }} spots left
                         </p>

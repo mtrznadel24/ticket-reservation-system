@@ -1,24 +1,21 @@
-import json
-
 import stripe
 from django.conf import settings
+from django.contrib.auth import login
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.db.models import Count, Q, Sum
 from django.forms import formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
-from django.views import generic
 from django.contrib.auth.decorators import login_required, permission_required
 from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.views.generic import TemplateView
+from django.views.generic import TemplateView, ListView, DetailView
 
 from .models import Ticket, Event, Order, OrderDetails
-from django.contrib.auth import login
-from .forms import CustomUserCreationForm, ParticipantForm
+from .forms import ParticipantForm, CustomUserCreationForm
 from tickets.services.order_logic import (
     reserve_tickets,
     update_participants_details,
@@ -27,8 +24,10 @@ from tickets.services.order_logic import (
 )
 from .services.stripe_service import create_stripe_checkout_session
 
+# Public views
 
 class IndexView(TemplateView):
+    """Display the homepage with the latest 5 upcoming events."""
     template_name = "tickets/index.html"
 
     def get_context_data(self, **kwargs):
@@ -47,7 +46,8 @@ class IndexView(TemplateView):
         return context
 
 
-class EventsView(generic.ListView):
+class EventsView(ListView):
+    """Display the events with searchbar."""
     template_name = "tickets/events.html"
     context_object_name = "events"
 
@@ -73,9 +73,23 @@ class EventsView(generic.ListView):
 
         return context
 
+# Buying process
+
+class PaymentSuccessView(LoginRequiredMixin, TemplateView):
+    """Display the payment success page."""
+    template_name = "tickets/payment_success.html"
+
+class PaymentCanceledView(LoginRequiredMixin, TemplateView):
+    """Display the payment canceled page."""
+    template_name = "tickets/payment_canceled.html"
 
 @login_required
 def tickets_view(request, event_id):
+    """
+        Handle seat selection. Supports:
+        1. Interactive grid for numbered seats.
+        2. Quantity selection for general admission.
+    """
     event = get_object_or_404(Event, pk=event_id)
     tickets = (
         Ticket.objects
@@ -119,6 +133,7 @@ def tickets_view(request, event_id):
 
 @login_required
 def cart_view(request):
+    """Display the cart page with filling forms"""
     try:
         order = Order.objects.get(user=request.user, status=Order.Status.PENDING)
         order_details = OrderDetails.objects.filter(order=order).select_related(
@@ -174,6 +189,7 @@ def cart_view(request):
 
 @login_required
 def finalize_cart(request):
+    """Finalize the purchase."""
     session_id = request.GET.get("session_id")
 
     if not session_id:
@@ -200,69 +216,68 @@ def finalize_cart(request):
         messages.error(request, f"Wystąpił błąd podczas finalizacji zamówienia: {e}")
         return redirect("cart")
 
+# User Dashboard
 
-def register(request):
-    if request.method == "POST":
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.first_name = form.cleaned_data["first_name"]
-            user.last_name = form.cleaned_data["last_name"]
-            user.email = form.cleaned_data["email"]
-            user.save()
+class MyTicketsView(LoginRequiredMixin, ListView):
+    """Display logged user active tickets"""
+    template_name = "tickets/my_tickets.html"
+    context_object_name = "details"
 
-            login(request, user)
-            return redirect("home")
-    else:
-        form = CustomUserCreationForm()
-    return render(request, "registration/register.html", {"form": form})
+    def get_queryset(self):
+        details = (OrderDetails.active
+                   .for_user(self.request.user)
+                   .completed()
+                   .usable()
+                   .select_related("ticket", "participant", "order", "ticket__event")
+                   .order_by("ticket__event__start_datetime"))
+        return details
+
+class MyOrdersView(LoginRequiredMixin, ListView):
+    """Display logged user orders."""
+    template_name = "tickets/my_orders.html"
+    context_object_name = "orders"
+
+    def get_queryset(self):
+        orders = (
+            Order.objects.filter(user=self.request.user)
+            .annotate(total_calculated_price=Sum("orderdetails__ticket__price"))
+            .order_by("-updated_at")
+        )
+        return orders
 
 
-@login_required
-def my_orders(request):
-    orders = (
-        Order.objects.filter(user=request.user)
-        .annotate(total_calculated_price=Sum("orderdetails__ticket__price"))
-        .order_by("-updated_at")
-    )
+class OrderDetailsView(LoginRequiredMixin, DetailView):
+    """Display details of an order."""
+    model = Order
+    template_name = "tickets/order_details.html"
+    context_object_name = "order"
+    pk_url_kwarg = "order_id"
 
-    return render(request, "tickets/my_orders.html", {"orders": orders})
+    def get_queryset(self):
+        return Order.objects.filter(user=self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
 
-@login_required
-def order_details(request, order_id):
-    order = get_object_or_404(Order, id=order_id, user=request.user)
-    details = OrderDetails.objects.filter(order=order).select_related(
-        "ticket", "participant", "ticket__event"
-    )
+        details = OrderDetails.objects.filter(order=self.object).select_related(
+            "ticket", "participant", "ticket__event"
+        )
 
-    now = timezone.now()
-    can_be_canceled = False
+        now = timezone.now()
+        can_be_canceled = False
 
-    if order.status == Order.Status.COMPLETED:
-        can_be_canceled = all(d.ticket.event.start_datetime > now for d in details)
+        if self.object.status == Order.Status.COMPLETED:
+            can_be_canceled = all(d.ticket.event.start_datetime > now for d in details)
 
-    return render(
-        request, "tickets/order_details.html",
-        {"order": order, "details": details,"can_cancel": can_be_canceled}
-    )
-
-@login_required
-def my_tickets(request):
-    details = (OrderDetails.active
-               .for_user(request.user)
-               .completed()
-               .usable()
-               .select_related("ticket", "participant", "order", "ticket__event")
-               .order_by("ticket__event__start_datetime"))
-
-    return render(request, "tickets/my_tickets.html", {"details": details})
-
+        context["details"] = details
+        context["can_cancel"] = can_be_canceled
+        return context
 
 
 @require_POST
 @login_required
 def cancel_order(request, order_id):
+    """Cancel an order."""
     try:
         cancel_order_service(request.user, order_id)
         messages.success(request, "Zamówienie zostało anulowane.")
@@ -274,26 +289,19 @@ def cancel_order(request, order_id):
 
     return redirect("order_details", order_id=order_id)
 
-@login_required
-def payment_success(request, order_id):
-
-    return render(request, "tickets/payment_success.html", {"order_id": order_id})
-
-@login_required
-def payment_cancelled(request):
-
-    return render(request, "tickets/payment_cancelled.html")
+# Scanner/Staff
 
 @login_required
 @permission_required('tickets.can_scan_ticket', raise_exception=True)
 def scan_preview(request):
+    """Display a page to scan a ticket."""
     return render(request, "tickets/scan_preview.html")
 
 
 @login_required
 @permission_required('tickets.can_scan_ticket', raise_exception=True)
 def scan_ticket_view(request, ticket_uuid):
-
+    """Display a page after scanning a ticket enabling to update ticket.is_scanned data."""
     detail = get_object_or_404(OrderDetails.objects.select_related('ticket', 'participant', 'ticket__event'), ticket_uuid=ticket_uuid)
 
     if request.method == "POST":
@@ -323,10 +331,28 @@ def scan_ticket_view(request, ticket_uuid):
 
     return render(request, "tickets/scan_ticket.html", context)
 
+# Webhooks/Auth
 
+def register(request):
+    """Display a page to register new user"""
+    if request.method == "POST":
+        form = CustomUserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save(commit=False)
+            user.first_name = form.cleaned_data["first_name"]
+            user.last_name = form.cleaned_data["last_name"]
+            user.email = form.cleaned_data["email"]
+            user.save()
+
+            login(request, user)
+            return redirect("home")
+    else:
+        form = CustomUserCreationForm()
+    return render(request, "registration/register.html", {"form": form})
 
 @csrf_exempt
 def stripe_webhook(request):
+    """Handle a webhook request."""
     payload = request.body
     sig_header = request.headers.get('stripe-signature')
     endpoint_secret = settings.STRIPE_WEBHOOK_SECRET

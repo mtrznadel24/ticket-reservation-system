@@ -18,6 +18,7 @@ reportlab = "^4.4.10"
 qrcode = {extras = ["pil"], version = "^8.2"}
 stripe = "^14.4.0"
 django-encrypted-model-fields = "^0.6.5"
+pillow = "^12.1.1"
 
 
 [tool.poetry.group.dev.dependencies]

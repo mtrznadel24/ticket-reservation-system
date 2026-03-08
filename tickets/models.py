@@ -11,9 +11,10 @@ from encrypted_model_fields.fields import EncryptedCharField
 
 class Event(models.Model):
     name = models.CharField(max_length=64)
+    image = models.ImageField(upload_to="events/%Y/%m/%d/", null=True, blank=True)
     description = models.TextField(null=True, blank=True)
     location = models.CharField(max_length=255, default='Main Arena')
-    start_datetime = models.DateTimeField()
+    start_datetime = models.DateTimeField(db_index=True)
     need_pesel = models.BooleanField(default=False)
     has_numbered_seats = models.BooleanField(default=True)
 
@@ -65,6 +66,9 @@ class Ticket(models.Model):
     class Meta:
         db_table = "tickets"
         unique_together = ("event", "sector", "row", "seat")
+        indexes = [
+            models.Index(fields=['status', 'reserved_until']),
+        ]
         permissions = [
             ("can_scan_ticket", "Can verify and scan event tickets"),
         ]
@@ -101,11 +105,11 @@ class Order(models.Model):
         COMPLETED = "completed", "Completed"
         CANCELED = "canceled", "Canceled"
 
-    status = models.CharField(max_length=16, choices=Status, default=Status.PENDING)
+    status = models.CharField(max_length=16, choices=Status, default=Status.PENDING, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    tickets_pdf = models.FileField(upload_to="tickets_pdfs", null=True, blank=True)
+    tickets_pdf = models.FileField(upload_to="tickets_pdfs/%Y/%m/%d/", null=True, blank=True)
 
     def __str__(self):
         return f"Order {self.id}"
@@ -124,7 +128,7 @@ class OrderDetails(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE)
     participant = models.ForeignKey(Participant, null=True, blank=True, on_delete=models.CASCADE)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
-    ticket_uuid = models.UUIDField(default=uuid.uuid4, editable=False)
+    ticket_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     scanned_at = models.DateTimeField(null=True, blank=True)
 
 

@@ -39,6 +39,6 @@ class ParticipantForm(forms.Form):
 
     def clean_pesel(self):
         pesel = self.cleaned_data["pesel"]
-        if not pesel.isdigit():
+        if pesel and not pesel.isdigit():
             raise forms.ValidationError("Pesel musi składać się wyłącznie z cyfr")
         return pesel

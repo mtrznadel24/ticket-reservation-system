@@ -33,7 +33,7 @@ class ParticipantForm(forms.Form):
     pesel = forms.CharField(
         min_length=11,
         max_length=11,
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'PESEL'})
     )
 

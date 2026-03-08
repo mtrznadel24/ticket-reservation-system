@@ -1,47 +1,85 @@
 {% extends "base.html" %}
 
-{% block title %}Szczegóły Zamówienia #{{ order.id }}{% endblock %}
+{% block title %}Order #{{ order.id }} | My Tickets{% endblock %}
 
 {% block content %}
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Szczegóły Zamówienia #{{ order.id }}</h2>
-    <a href="{% url 'my_orders' %}" class="btn btn-secondary">← Powrót do zamówień</a>
-  </div>
+<div class="container py-5">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-5">
+        <div>
+            <a href="{% url 'my_orders' %}" class="btn btn-sm btn-outline-secondary rounded-pill mb-3">
+                <i class="bi bi-arrow-left me-1"></i> Back to Orders
+            </a>
+            <h2 class="fw-bold mb-0">Order #{{ order.id }}</h2>
+        </div>
 
-  <div class="card mb-4">
-    <div class="card-header">
-      Informacje o zamówieniu
-    </div>
-    <div class="card-body">
-        <p><strong>Status:</strong> <span class="badge bg-primary">{{ order.status }}</span></p>
-        <p><strong>Data aktualizacji:</strong> {{ order.updated_at|date:"Y-m-d H:i" }}</p>
-        <p><strong>Wartość zamówienia:</strong> ${{ order.total_price }}</p>
-        {% if order.status != "canceled" %}
-          <form action="{% url 'cancel_order' order.id %}" method="post" class="d-inline">
-            {% csrf_token %}
-            <button type="submit" class="btn btn-danger" onclick="return confirm('Na pewno chcesz anulować to zamówienie?');">
-              Anuluj zamówienie
-            </button>
-          </form>
+        {% if can_cancel %}
+            <form action="{% url 'cancel_order' order.id %}" method="post" class="mt-3 mt-md-0">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm"
+                        onclick="return confirm('Are you sure you want to cancel this order? This action cannot be undone.');">
+                    <i class="bi bi-x-circle me-1"></i> Cancel Order
+                </button>
+            </form>
+        {% elif order.status == 'canceled' %}
+            <span class="badge bg-danger fs-6 rounded-pill px-4 py-2 mt-3 mt-md-0"><i class="bi bi-x-circle me-1"></i> Canceled</span>
+        {% else %}
+            <span class="badge bg-secondary fs-6 rounded-pill px-4 py-2 mt-3 mt-md-0" title="Cannot cancel: Event has started">
+                <i class="bi bi-lock-fill me-1"></i> Non-refundable
+            </span>
         {% endif %}
     </div>
-  </div>
 
-  <h3>Zakupione bilety:</h3>
-  <div class="list-group">
-    {% for detail in details %}
-        <div class="list-group-item">
-            <div class="d-flex w-100 justify-content-between">
-                <h5 class="mb-1">{{ detail.ticket.event.name }}</h5>
-                <small class="text-muted">{{ detail.ticket.event.event_date }}</small>
+    <div class="card border-0 shadow-sm rounded-4 mb-5 bg-dark text-white">
+        <div class="card-body p-4 d-flex flex-wrap justify-content-between align-items-center">
+            <div class="me-4 mb-3 mb-md-0">
+                <small class="text-white-50 text-uppercase fw-bold">Status</small><br>
+                <span class="fs-5 fw-bold text-{% if order.status == 'completed' %}success{% elif order.status == 'canceled' %}danger{% else %}warning{% endif %}">
+                    {{ order.status|title }}
+                </span>
             </div>
-            <p class="mb-1">
-                <strong>Uczestnik:</strong> {{ detail.participant.first_name }} {{ detail.participant.last_name }}<br>
-                <strong>Miejsce:</strong> {{ detail.ticket.seat }}
-            </p>
-            <small class="text-muted">UUID: {{ detail.ticket_uuid }}</small>
+            <div class="me-4 mb-3 mb-md-0">
+                <small class="text-white-50 text-uppercase fw-bold">Date Updated</small><br>
+                <span class="fs-5 fw-bold">{{ order.updated_at|date:"d M Y, H:i" }}</span>
+            </div>
+            <div>
+                <small class="text-white-50 text-uppercase fw-bold">Total Amount</small><br>
+                <span class="fs-4 fw-bold text-success">${{ order.total_price }}</span>
+            </div>
         </div>
-    {% endfor %}
-  </div>
+    </div>
 
+    <h4 class="fw-bold mb-4">Purchased Tickets</h4>
+    <div class="row g-4">
+        {% for detail in details %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100">
+                    <div class="card-body p-4">
+                        <h5 class="fw-bold text-primary mb-1">{{ detail.ticket.event.name }}</h5>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-calendar-event me-1"></i> {{ detail.ticket.event.start_datetime|date:"d M Y, H:i" }}
+                        </p>
+
+                        <div class="bg-light rounded-3 p-3 mb-3 border">
+                            <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.7rem;">Participant</small>
+                            <span class="fw-bold">{{ detail.participant.first_name }} {{ detail.participant.last_name }}</span>
+
+                            <hr class="my-2 opacity-10">
+
+                            <small class="text-muted d-block fw-bold text-uppercase" style="font-size: 0.7rem;">Location</small>
+                            {% if detail.ticket.event.has_numbered_seats %}
+                                <span class="fw-bold text-dark">Sector {{ detail.ticket.sector|default:"-" }}, Row {{ detail.ticket.row|default:"-" }}, Seat {{ detail.ticket.seat }}</span>
+                            {% else %}
+                                <span class="fw-bold text-info"><i class="bi bi-people-fill"></i> General Admission</span>
+                            {% endif %}
+                        </div>
+
+                        <div class="text-center">
+                            <code class="small text-muted bg-light px-2 py-1 rounded border">UUID: {{ detail.ticket_uuid|stringformat:"s"|slice:":8" }}...</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

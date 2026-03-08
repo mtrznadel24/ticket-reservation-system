@@ -1,50 +1,93 @@
 {% extends "base.html" %}
 
-{% block title %}Nadchodzące Wydarzenia{% endblock %}
+{% block title %}Discover Events | My Tickets{% endblock %}
 
 {% block content %}
-    <div class="text-center mb-4">
-        <h2 class="display-5 fw-bold">Nadchodzące wydarzenia</h2>
-        <p class="text-muted">Wybierz wydarzenie, aby zobaczyć dostępne bilety</p>
-    </div>
+<div class="row mb-5">
+    <div class="col-12 text-center">
+        <h2 class="display-6 fw-bold mb-2">Explore Events</h2>
+        <p class="text-muted mb-4">Find and book tickets for the most anticipated events</p>
 
-    <div class="row justify-content-center mb-4">
-        <div class="col-md-6">
-            <form method="get" action="{% url 'events' %}" class="input-group">
-                <input type="text"
-                       name="search"
-                       class="form-control"
-                       placeholder="Wyszukaj wydarzenia..."
-                       value="{{ search_query }}">
-                <button type="submit" class="btn btn-primary">Szukaj</button>
-            </form>
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <form method="get" action="{% url 'events' %}" class="d-flex bg-white p-2 rounded-pill shadow-sm border  gap-2">
+                    <input type="text"
+                           name="search"
+                           class="form-control border-0 rounded-pill ps-4"
+                           placeholder="Search by name or category..."
+                           value="{{ search_query|default:'' }}">
+                    <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+                        <i class="bi bi-search me-2"></i>Search
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
+</div>
 
-    {% if latest_events %}
-        <div class="row g-4">
-            {% for event in latest_events %}
-                <div class="col-md-6 col-lg-4">
-                    <div class="card h-100 shadow-sm border-0">
-                        <div class="card-body d-flex flex-column">
-                            <h5 class="card-title">{{ event.name }}</h5>
-                            <p class="card-text text-muted">
-                                <i class="bi bi-calendar"></i> {{ event.start_datetime|date:"d.m.Y" }}<br>
-                                <i class="bi bi-ticket-fill"></i> Dostępne bilety: {{ event.available_count }}
-                            </p>
-                            <div class="mt-auto">
-                                <a href="{% url 'tickets' event.id %}" class="btn btn-primary w-100">
-                                    Zobacz bilety
-                                </a>
-                            </div>
+<hr class="mb-5 opacity-10">
+
+{% if events %}
+    <div class="row g-4">
+        {% for event in events %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden event-card">
+                    <div class="bg-dark text-white p-4 text-center position-relative" style="height: 140px; background: linear-gradient(45deg, #212529 0%, #343a40 100%);">
+                        <i class="bi bi-music-note-beamed display-5 opacity-50"></i>
+                        <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-primary shadow-sm">
+                            Upcoming
+                        </span>
+                    </div>
+
+                    <div class="card-body d-flex flex-column p-4">
+                        <div class="mb-2">
+                            <span class="badge bg-light text-primary border border-primary-subtle fw-semibold">
+                                <i class="bi bi-calendar3 me-1"></i> {{ event.start_datetime|date:"d M Y" }}
+                            </span>
+                            <span class="badge bg-light text-dark border fw-semibold">
+                                <i class="bi bi-clock me-1"></i> {{ event.start_datetime|date:"H:i" }}
+                            </span>
+                        </div>
+
+                        <h4 class="card-title fw-bold mb-3">{{ event.name }}</h4>
+
+                        <p class="card-text text-muted mb-4 small">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Main Arena, City Center<br>
+                            <i class="bi bi-ticket-perforated-fill text-success me-1"></i>
+                            {{ event.available_count }} spots left
+                        </p>
+
+                        <div class="mt-auto">
+                            <a href="{% url 'tickets' event.id %}" class="btn btn-outline-dark w-100 rounded-pill fw-bold">
+                                View Tickets <i class="bi bi-chevron-right ms-1"></i>
+                            </a>
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="text-center py-5">
+        <div class="mb-4">
+            <i class="bi bi-search-heart display-1 text-muted opacity-25"></i>
         </div>
-    {% else %}
-        <div class="alert alert-info text-center" role="alert">
-            Brak dostępnych wydarzeń.
-        </div>
-    {% endif %}
+        <h3 class="fw-bold">No events found</h3>
+        <p class="text-muted">We couldn't find any events matching your search. Try different keywords!</p>
+        <a href="{% url 'events' %}" class="btn btn-primary rounded-pill px-4 mt-2">Clear search</a>
+    </div>
+{% endif %}
+
+<style>
+    .event-card {
+        transition: all 0.3s cubic-bezier(.25,.8,.25,1);
+    }
+    .event-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 1rem 3rem rgba(0,0,0,.1) !important;
+    }
+    .form-control:focus {
+        box-shadow: none;
+    }
+</style>
 {% endblock %}

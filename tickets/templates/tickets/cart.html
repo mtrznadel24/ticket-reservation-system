@@ -1,69 +1,99 @@
 {% extends "base.html" %}
-{% block title %}Twój koszyk{% endblock %}
+{% block title %}Your Cart | My Tickets{% endblock %}
 
 {% block content %}
-<div class="container py-4">
-    <h2 class="mb-4 fw-bold">🛒 Twój koszyk</h2>
+<div class="container py-5">
+    <div class="d-flex align-items-center mb-5">
+        <i class="bi bi-cart3 display-5 text-primary me-3"></i>
+        <h1 class="fw-bold mb-0">Secure Checkout</h1>
+    </div>
 
     {% if forms_with_details %}
         <form method="post" novalidate>
             {% csrf_token %}
             {{ formset.management_form }}
 
-            <div class="row">
-                <div class="col-lg-8 mb-4">
+            <div class="row g-5">
+                <div class="col-lg-8">
+                    <h4 class="fw-bold mb-4">Participant Details</h4>
+
                     {% for detail, form in forms_with_details %}
-                        <div class="card mb-4 shadow-sm border-0">
-                            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                                <span class="h5 mb-0"><i class="bi bi-ticket-perforated"></i> Bilet na: {{ detail.ticket.event.name }}</span>
-                                <span class="badge bg-light text-primary fs-6">${{ detail.ticket.price }}</span>
+                        <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden">
+                            <div class="card-header bg-dark text-white p-4 border-0 d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h5 class="mb-1 fw-bold">{{ detail.ticket.event.name }}</h5>
+                                    <span class="text-white-50 small">
+                                        <i class="bi bi-calendar3 me-1"></i> {{ detail.ticket.event.start_datetime|date:"d M Y, H:i" }}
+                                    </span>
+                                </div>
+                                <div class="text-end">
+                                    <span class="badge bg-primary fs-6 rounded-pill px-3 py-2 shadow-sm">${{ detail.ticket.price }}</span>
+                                </div>
                             </div>
-                            <div class="card-body bg-light">
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <h6 class="card-subtitle text-muted mb-0">Wprowadź dane uczestnika:</h6>
-                                    <span class="badge bg-secondary">Miejsce: {{ detail.ticket.seat }}</span>
+
+                            <div class="card-body p-4 bg-white">
+                                <div class="d-flex justify-content-between align-items-center mb-4 pb-3 border-bottom">
+                                    <span class="text-muted fw-semibold">Assign ticket to:</span>
+
+                                    {% if detail.ticket.event.has_numbered_seats %}
+                                        <span class="badge bg-light text-dark border px-3 py-2">
+                                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> Seat: {{ detail.ticket.seat }}
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-light text-dark border px-3 py-2">
+                                            <i class="bi bi-people-fill text-info me-1"></i> General Admission
+                                        </span>
+                                    {% endif %}
                                 </div>
 
-                                <div class="row g-3">
-                                    {# Pole: Imię #}
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-bold small">Imię</label>
-                                        <input type="text"
-                                               name="{{ form.first_name.html_name }}"
-                                               value="{{ form.first_name.value|default:'' }}"
-                                               class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
-                                               placeholder="np. Jan">
-                                        {% if form.first_name.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.first_name.errors.0 }}</div>
-                                        {% endif %}
+                                <div class="row g-4">
+                                    <div class="col-md-{% if detail.ticket.event.need_pesel %}4{% else %}6{% endif %}">
+                                        <div class="form-floating">
+                                            <input type="text"
+                                                   name="{{ form.first_name.html_name }}"
+                                                   value="{{ form.first_name.value|default:'' }}"
+                                                   class="form-control {% if form.first_name.errors %}is-invalid{% endif %}"
+                                                   placeholder="First Name" required>
+                                            <label class="text-muted">First Name</label>
+                                            {% if form.first_name.errors %}
+                                                <div class="invalid-feedback fw-bold">{{ form.first_name.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
 
-                                    {# Pole: Nazwisko #}
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-bold small">Nazwisko</label>
-                                        <input type="text"
-                                               name="{{ form.last_name.html_name }}"
-                                               value="{{ form.last_name.value|default:'' }}"
-                                               class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
-                                               placeholder="np. Kowalski">
-                                        {% if form.last_name.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.last_name.errors.0 }}</div>
-                                        {% endif %}
+                                    <div class="col-md-{% if detail.ticket.event.need_pesel %}4{% else %}6{% endif %}">
+                                        <div class="form-floating">
+                                            <input type="text"
+                                                   name="{{ form.last_name.html_name }}"
+                                                   value="{{ form.last_name.value|default:'' }}"
+                                                   class="form-control {% if form.last_name.errors %}is-invalid{% endif %}"
+                                                   placeholder="Last Name" required>
+                                            <label class="text-muted">Last Name</label>
+                                            {% if form.last_name.errors %}
+                                                <div class="invalid-feedback fw-bold">{{ form.last_name.errors.0 }}</div>
+                                            {% endif %}
+                                        </div>
                                     </div>
 
-                                    {# Pole: PESEL #}
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-bold small">PESEL</label>
-                                        <input type="text"
-                                               name="{{ form.pesel.html_name }}"
-                                               value="{{ form.pesel.value|default:'' }}"
-                                               class="form-control {% if form.pesel.errors %}is-invalid{% endif %}"
-                                               maxlength="11"
-                                               placeholder="11 cyfr">
-                                        {% if form.pesel.errors %}
-                                            <div class="invalid-feedback d-block">{{ form.pesel.errors.0 }}</div>
-                                        {% endif %}
-                                    </div>
+                                    {% if detail.ticket.event.need_pesel %}
+                                        <div class="col-md-4">
+                                            <div class="form-floating">
+                                                <input type="text"
+                                                       name="{{ form.pesel.html_name }}"
+                                                       value="{{ form.pesel.value|default:'' }}"
+                                                       class="form-control {% if form.pesel.errors %}is-invalid{% endif %}"
+                                                       maxlength="11"
+                                                       placeholder="PESEL ID" required>
+                                                <label class="text-muted">PESEL Number</label>
+                                                {% if form.pesel.errors %}
+                                                    <div class="invalid-feedback fw-bold">{{ form.pesel.errors.0 }}</div>
+                                                {% endif %}
+                                            </div>
+                                            <small class="text-muted" style="font-size: 0.7rem;">Required for security</small>
+                                        </div>
+                                    {% else %}
+                                        <input type="hidden" name="{{ form.pesel.html_name }}" value="">
+                                    {% endif %}
                                 </div>
                             </div>
                         </div>
@@ -71,34 +101,34 @@
                 </div>
 
                 <div class="col-lg-4">
-                    <div class="card border-primary border-2 shadow-lg position-sticky" style="top: 2rem;">
-                        <div class="card-header bg-white border-bottom-0 pt-4 pb-0 text-center">
-                            <h4 class="fw-bold">Podsumowanie</h4>
-                        </div>
-                        <div class="card-body">
+                    <div class="card border-0 shadow-lg rounded-4 position-sticky" style="top: 100px;">
+                        <div class="card-body p-4 p-md-5 bg-dark text-white rounded-4">
+                            <h4 class="fw-bold mb-4">Order Summary</h4>
+
                             <div class="d-flex justify-content-between align-items-center mb-3">
-                                <span class="text-muted">Liczba biletów:</span>
-                                <span class="fw-bold">{{ forms_with_details|length }}</span>
+                                <span class="text-white-50">Tickets:</span>
+                                <span class="fw-bold fs-5">{{ forms_with_details|length }}</span>
                             </div>
 
-                            <hr>
+                            <hr class="border-secondary opacity-25 my-4">
 
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <span class="h5 mb-0">Do zapłaty:</span>
-                                <span class="h3 mb-0 text-primary fw-bold">${{ total }}</span>
+                            <div class="d-flex justify-content-between align-items-center mb-5">
+                                <span class="h5 mb-0 text-white-50">Total:</span>
+                                <span class="h2 mb-0 fw-bold text-success">${{ total }}</span>
                             </div>
 
-                            <div class="d-grid gap-3">
-                                <button type="submit" class="btn btn-success btn-lg shadow-sm" onclick="return confirm('Czy na pewno chcesz sfinalizować zakup?');">
-                                    <i class="bi bi-credit-card"></i> Przejdź do płatności
-                                </button>
-                                <a href="{% url 'events' %}" class="btn btn-outline-secondary">
-                                    Dobierz więcej biletów
-                                </a>
-                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm mb-3"
+                                    onclick="return confirm('Proceed to Stripe checkout?');">
+                                Checkout with Stripe <i class="bi bi-arrow-right ms-2"></i>
+                            </button>
 
-                            <div class="mt-3 text-center small text-muted">
-                                <i class="bi bi-shield-lock"></i> Bezpieczna transakcja. Rezerwacja wygasa za 15 minut.
+                            <a href="{% url 'events' %}" class="btn btn-outline-light text-white btn-lg w-100 rounded-pill">
+                                Continue Shopping
+                            </a>
+
+                            <div class="mt-4 text-center small text-white-50">
+                                <i class="bi bi-shield-lock-fill text-success me-1"></i>
+                                Secure checkout powered by Stripe.
                             </div>
                         </div>
                     </div>
@@ -106,10 +136,17 @@
             </div>
         </form>
     {% else %}
-        <div class="text-center py-5">
-            <div class="display-1 text-muted mb-4">🛒</div>
-            <p class="lead">Twój koszyk jest obecnie pusty.</p>
-            <a href="{% url 'events' %}" class="btn btn-primary px-4 btn-lg mt-3">Przeglądaj wydarzenia</a>
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center py-5 mt-5">
+                <div class="bg-light rounded-circle d-inline-flex p-5 mb-4 shadow-sm">
+                    <i class="bi bi-cart-x display-1 text-muted"></i>
+                </div>
+                <h2 class="fw-bold mb-3">Your cart is empty</h2>
+                <p class="text-muted fs-5 mb-5">Looks like you haven't added any tickets yet.</p>
+                <a href="{% url 'events' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm">
+                    Discover Events
+                </a>
+            </div>
         </div>
     {% endif %}
 </div>

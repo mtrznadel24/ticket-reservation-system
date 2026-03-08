@@ -1,48 +1,66 @@
 {% extends "base.html" %}
 
-{% block title %}Rejestracja{% endblock %}
+{% block title %}Rejestracja | My Tickets{% endblock %}
 
 {% block content %}
-<div class="row justify-content-center">
+<div class="row justify-content-center mt-4 mb-5">
     <div class="col-md-8 col-lg-6">
-        <div class="card">
-            <div class="card-header">
-                <h2 class="card-title text-center mb-0">Utwórz nowe konto</h2>
+        <div class="card border-0 shadow-lg rounded-4 overflow-hidden">
+            <div class="card-header bg-dark text-white text-center py-4 border-0">
+                <i class="bi bi-person-plus display-4 mb-2 d-block text-primary"></i>
+                <h2 class="card-title h3 mb-0 fw-bold">Dołącz do nas</h2>
+                <p class="mb-0 text-white-50 small mt-1">Utwórz konto, aby rezerwować bilety</p>
             </div>
-            <div class="card-body">
+
+            <div class="card-body p-4 p-md-5 bg-white">
                 <form method="post">
                     {% csrf_token %}
 
                     {% if form.non_field_errors %}
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger rounded-3 shadow-sm">
                             {% for error in form.non_field_errors %}
-                                <p>{{ error }}</p>
+                                <i class="bi bi-exclamation-triangle-fill me-2"></i>{{ error }}
                             {% endfor %}
                         </div>
                     {% endif %}
 
                     {% for field in form %}
-                        <div class="mb-3">
-                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
-                            <input type="{{ field.field.widget.input_type }}" name="{{ field.name }}" id="{{ field.id_for_label }}" class="form-control">
+                        <div class="mb-4">
+                            <div class="form-floating">
+                                <input type="{{ field.field.widget.input_type }}"
+                                       name="{{ field.name }}"
+                                       id="{{ field.id_for_label }}"
+                                       class="form-control {% if field.errors %}is-invalid{% endif %}"
+                                       placeholder="{{ field.label }}"
+                                       value="{{ field.value|default_if_none:'' }}"
+                                       required>
+                                <label for="{{ field.id_for_label }}" class="text-muted">{{ field.label }}</label>
+                            </div>
+
                             {% if field.help_text %}
-                                <small class="form-text text-muted">{{ field.help_text|safe }}</small>
+                                <div class="form-text small mt-1 text-muted ms-2">
+                                    <i class="bi bi-info-circle me-1"></i>{{ field.help_text|safe }}
+                                </div>
                             {% endif %}
+
                             {% for error in field.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {{ error }}
+                                <div class="text-danger small mt-1 ms-2 fw-bold d-block">
+                                    <i class="bi bi-x-circle me-1"></i>{{ error }}
                                 </div>
                             {% endfor %}
                         </div>
                     {% endfor %}
 
-                    <div class="d-grid">
-                        <button type="submit" class="btn btn-primary">Zarejestruj się</button>
+                    <div class="d-grid mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                            Utwórz konto <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
                     </div>
                 </form>
             </div>
-             <div class="card-footer text-center">
-                Masz już konto? <a href="{% url 'login' %}">Zaloguj się</a>.
+             <div class="card-footer bg-light text-center py-3 border-0">
+                <span class="text-muted">Masz już konto?</span>
+                <a href="{% url 'login' %}" class="fw-bold text-decoration-none ms-1">Zaloguj się</a>
             </div>
         </div>
     </div>

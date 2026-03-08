@@ -31,21 +31,47 @@ from .services.stripe_service import create_stripe_checkout_session
 class IndexView(TemplateView):
     template_name = "tickets/index.html"
 
+    def get_context_data(self, **kwargs):
+
+        context = super().get_context_data(**kwargs)
+
+        context['latest_events'] = Event.objects.filter(
+            start_datetime__gte=timezone.now()
+        ).annotate(
+            available_count=Count(
+                'ticket',
+                filter=Q(ticket__status=Ticket.Status.AVAILABLE),
+            )
+        ).order_by('start_datetime')[:5]
+
+        return context
+
 
 class EventsView(generic.ListView):
     template_name = "tickets/events.html"
-    context_object_name = "latest_events"
+    context_object_name = "events"
 
     def get_queryset(self):
         now = timezone.now()
 
-        return (
-            Event.objects.filter(start_datetime__gt=now)
-            .annotate(
-                available_count=Count("ticket", filter=Q(ticket__status=Ticket.Status.AVAILABLE))
-            )
-            .order_by("start_datetime")
-        )
+        query = self.request.GET.get("search")
+
+        qs = ((Event.objects.filter(start_datetime__gt=now)
+        .annotate(
+            available_count=Count("ticket", filter=Q(ticket__status=Ticket.Status.AVAILABLE))
+        )).order_by("start_datetime"))
+
+        if query:
+            qs = qs.filter(name__icontains=query)
+
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        context['search_query'] = self.request.GET.get("search", '')
+
+        return context
 
 
 @login_required
@@ -53,12 +79,24 @@ def tickets_view(request, event_id):
     event = get_object_or_404(Event, pk=event_id)
     tickets = (
         Ticket.objects
-        .filter(event=event, status=Ticket.Status.AVAILABLE)
-        .order_by("seat")
+        .filter(event=event)
+        .order_by("sector", "row", "seat")
     )
 
     if request.method == "POST":
-        selected_ticket_ids = request.POST.getlist("ticket_ids")
+        selected_ticket_ids = []
+
+        if event.has_numbered_seats:
+            selected_ticket_ids = request.POST.getlist("ticket_ids")
+        else:
+            quantity = int(request.POST.get('quantity', 0))
+            if quantity > 0:
+                selected_ticket_ids = list(
+                    Ticket.objects.filter(
+                        event=event,
+                        status=Ticket.Status.AVAILABLE
+                    ).values_list("id", flat=True)[:quantity]
+                )
 
         if not selected_ticket_ids:
             messages.error(request, "Nie wybrano żadnych biletów.")
@@ -84,7 +122,7 @@ def cart_view(request):
     try:
         order = Order.objects.get(user=request.user, status=Order.Status.PENDING)
         order_details = OrderDetails.objects.filter(order=order).select_related(
-            "participant", "ticket"
+            "participant", "ticket", "ticket__event"
         )
         total = order.total_price()
 
@@ -195,11 +233,18 @@ def my_orders(request):
 def order_details(request, order_id):
     order = get_object_or_404(Order, id=order_id, user=request.user)
     details = OrderDetails.objects.filter(order=order).select_related(
-        "ticket", "participant"
+        "ticket", "participant", "ticket__event"
     )
 
+    now = timezone.now()
+    can_be_canceled = False
+
+    if order.status == Order.Status.COMPLETED:
+        can_be_canceled = all(d.ticket.event.start_datetime > now for d in details)
+
     return render(
-        request, "tickets/order_details.html", {"order": order, "details": details}
+        request, "tickets/order_details.html",
+        {"order": order, "details": details,"can_cancel": can_be_canceled}
     )
 
 @login_required
@@ -208,7 +253,7 @@ def my_tickets(request):
                .for_user(request.user)
                .completed()
                .usable()
-               .select_related("ticket", "participant", "order")
+               .select_related("ticket", "participant", "order", "ticket__event")
                .order_by("ticket__event__start_datetime"))
 
     return render(request, "tickets/my_tickets.html", {"details": details})

@@ -1,57 +1,146 @@
 {% extends "base.html" %}
 
-{% block title %}{{ event.name }} - Wybierz bilety{% endblock %}
+{% block title %}Get Tickets - {{ event.name }}{% endblock %}
 
 {% block content %}
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1>{{ event.name }}</h1>
-        <p class="lead text-muted">{{ event.event_date }}</p>
-    </div>
-    <a href="{% url 'events' %}" class="btn btn-secondary">← Powrót do wydarzeń</a>
-  </div>
-
-  <h3>Dostępne bilety:</h3>
-
-  {% if tickets %}
-    <div class="card">
-        <div class="card-body">
-            <form method="post" action="">
-                {% csrf_token %}
-                <div class="table-responsive">
-                    <table class="table table-striped table-hover align-middle">
-                        <thead class="table-dark">
-                          <tr>
-                            <th scope="col" class="text-center">Wybierz</th>
-                            <th scope="col">Miejsce</th>
-                            <th scope="col">Cena</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {% for ticket in tickets %}
-                            <tr>
-                              <td class="text-center">
-                                <div class="form-check d-flex justify-content-center">
-                                    <input class="form-check-input" type="checkbox" name="ticket_ids" value="{{ ticket.id }}" id="ticket_{{ ticket.id }}">
-                                </div>
-                              </td>
-                              <td><label class="form-check-label" for="ticket_{{ ticket.id }}">{{ ticket.seat }}</label></td>
-                              <td>${{ ticket.price }}</td>
-                            </tr>
-                          {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-                <div class="text-end mt-3">
-                    <button type="submit" class="btn btn-primary btn-lg">Dodaj do koszyka</button>
-                </div>
-            </form>
+<div class="card bg-dark text-white border-0 shadow-lg rounded-4 overflow-hidden mb-5">
+    <div class="card-body p-4 p-md-5 d-flex justify-content-between align-items-center" style="background: linear-gradient(45deg, #212529 0%, #0d6efd 100%);">
+        <div>
+            <span class="badge bg-light text-primary mb-2">Upcoming</span>
+            <h1 class="display-6 fw-bold mb-1">{{ event.name }}</h1>
+            <p class="mb-0 opacity-75">
+                <i class="bi bi-calendar3 me-2"></i>{{ event.start_datetime|date:"d M Y, H:i" }} |
+                <i class="bi bi-geo-alt me-2"></i>{{ event.location|default:"Main Arena" }}
+            </p>
         </div>
+        <a href="{% url 'events' %}" class="btn btn-outline-light rounded-pill px-4 d-none d-md-block">
+            <i class="bi bi-arrow-left me-2"></i>Back to Events
+        </a>
     </div>
-  {% else %}
-    <div class="alert alert-warning" role="alert">
-        Brak dostępnych biletów na to wydarzenie.
-    </div>
-  {% endif %}
+</div>
 
+<div class="row justify-content-center">
+    <div class="col-12 col-xl-10">
+
+        {% if not event.has_numbered_seats %}
+            <div class="card shadow-sm border-0 rounded-4 text-center p-5">
+                <i class="bi bi-ticket-perforated display-1 text-primary mb-3"></i>
+                <h3 class="fw-bold mb-3">General Admission</h3>
+                <p class="text-muted mb-4">This event has unassigned standing or seating areas.</p>
+
+                <form method="post" class="d-flex flex-column align-items-center">
+                    {% csrf_token %}
+                    <div class="input-group mb-4" style="max-width: 200px;">
+                        <span class="input-group-text bg-white"><i class="bi bi-people"></i></span>
+                        <input type="number" name="quantity" class="form-control text-center fs-5" value="1" min="1" max="10" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">
+                        Add to Cart
+                    </button>
+                </form>
+            </div>
+
+        {% else %}
+            <div class="card shadow-sm border-0 rounded-4 p-4 p-md-5">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h3 class="fw-bold mb-0">Select your seats</h3>
+                </div>
+
+                <form method="post" id="seatForm">
+                    {% csrf_token %}
+
+                    {% regroup tickets by sector as sector_list %}
+
+                    {% if sector_list|length > 1 %}
+                        <ul class="nav nav-pills mb-4 justify-content-center border-bottom pb-3" id="sector-tabs" role="tablist">
+                            {% for sector in sector_list %}
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link {% if forloop.first %}active{% endif %} rounded-pill fw-bold px-4 mx-1"
+                                        data-bs-toggle="pill"
+                                        data-bs-target="#sector-{{ sector.grouper|slugify }}"
+                                        type="button" role="tab">
+                                    {{ sector.grouper|default:"Main Sector" }}
+                                </button>
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    {% endif %}
+
+                    <div class="tab-content" id="sector-tabsContent">
+                        {% for sector in sector_list %}
+                            <div class="tab-pane fade {% if forloop.first %}show active{% endif %}"
+                                 id="sector-{{ sector.grouper|slugify }}" role="tabpanel">
+
+                                <div class="stadium-grid overflow-auto py-3">
+                                    {% regroup sector.list by row as row_list %}
+
+                                    {% for row in row_list %}
+                                        <div class="d-flex align-items-center mb-3">
+
+                                            <div class="me-4 fw-bold text-muted small text-end" style="width: 50px; font-size: 0.8rem;">
+                                                ROW {{ row.grouper }}
+                                            </div>
+
+                                            <div class="d-flex gap-2">
+                                                {% for t in row.list %}
+                                                    {% if t.status == 'available' %}
+                                                        <input type="checkbox" class="btn-check seat-checkbox"
+                                                               name="ticket_ids" value="{{ t.id }}" id="ticket_{{ t.id }}" autocomplete="off">
+
+                                                        <label class="btn btn-outline-primary seat-btn fw-bold" for="ticket_{{ t.id }}">
+                                                            {{ t.seat }}
+                                                        </label>
+                                                    {% else %}
+                                                        <div class="btn btn-secondary seat-btn opacity-50 disabled" title="Taken">
+                                                            <small>{{ t.seat }}</small>
+                                                        </div>
+                                                    {% endif %}
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="text-center mt-5">
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow fw-bold" id="submitBtn">
+                            <i class="bi bi-cart-plus me-2"></i> Add Selected to Cart
+                        </button>
+                    </div>
+                </form>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .seat-btn {
+        width: 40px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        transition: all 0.2s ease-in-out;
+        padding: 0;
+    }
+
+    .btn-check:checked + .seat-btn {
+        background-color: #0d6efd;
+        color: white;
+        transform: scale(1.1);
+        box-shadow: 0 4px 8px rgba(13, 110, 253, 0.4);
+    }
+
+    .stadium-grid::-webkit-scrollbar {
+        height: 8px;
+    }
+    .stadium-grid::-webkit-scrollbar-thumb {
+        background-color: #dee2e6;
+        border-radius: 10px;
+    }
+</style>
 {% endblock %}

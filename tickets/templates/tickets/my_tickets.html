@@ -1,55 +1,69 @@
 {% extends "base.html" %}
 
-{% block title %}Moje Bilety{% endblock %}
+{% block title %}My Tickets | My Tickets{% endblock %}
 
 {% block content %}
 <div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-5">
-        <h2 class="fw-bold">🎫 Twoje Aktywne Bilety</h2>
-        <span class="badge bg-dark px-3 py-2">Aktywne: {{ details.count }}</span>
+    <div class="d-flex justify-content-between align-items-center mb-5 border-bottom pb-3">
+        <h2 class="fw-bold mb-0"><i class="bi bi-ticket-detailed text-primary me-2"></i> Your Active Tickets</h2>
+        <span class="badge bg-dark rounded-pill px-3 py-2 fs-6 shadow-sm">Active: {{ details|length }}</span>
     </div>
 
-    <div class="row">
+    <div class="row g-4">
         {% for detail in details %}
-        <div class="col-md-6 col-lg-4 mb-4">
-            <div class="card h-100 shadow-sm border-0 ticket-card">
-                <div class="card-header bg-primary text-white py-3">
+        <div class="col-md-6 col-lg-4">
+            <div class="card h-100 shadow-sm border-0 ticket-card rounded-4">
+                <div class="card-header bg-primary text-white py-3 border-0" style="border-bottom: 2px dashed rgba(255,255,255,0.4) !important;">
                     <div class="d-flex justify-content-between align-items-center">
-                        <small class="text-uppercase fw-bold">{{ detail.ticket.event.start_datetime|date:"d M Y" }}</small>
-                        <small>{{ detail.ticket.event.start_datetime|date:"H:i" }}</small>
+                        <span class="text-uppercase fw-bold"><i class="bi bi-calendar-event me-1"></i> {{ detail.ticket.event.start_datetime|date:"d M Y" }}</span>
+                        <span class="fw-bold"><i class="bi bi-clock me-1"></i> {{ detail.ticket.event.start_datetime|date:"H:i" }}</span>
                     </div>
                 </div>
 
-                <div class="card-body">
-                    <h5 class="card-title fw-bold mb-3">{{ detail.ticket.event.name }}</h5>
+                <div class="card-body p-4 d-flex flex-column">
+                    <h4 class="card-title fw-bold mb-4 text-center">{{ detail.ticket.event.name }}</h4>
 
-                    <div class="row mb-3">
-                        <div class="col-6">
-                            <small class="text-muted d-block">Uczestnik</small>
-                            <span class="fw-medium">{{ detail.participant.first_name }} {{ detail.participant.last_name }}</span>
+                    <div class="row mb-4 bg-light rounded-3 p-3 mx-0">
+                        <div class="col-6 border-end px-2">
+                            <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Ticket Holder</small>
+                            <div class="fw-bold text-dark text-truncate" title="{{ detail.participant.first_name }} {{ detail.participant.last_name }}">
+                                {{ detail.participant.first_name }} {{ detail.participant.last_name }}
+                            </div>
                         </div>
-                        <div class="col-6 text-end">
-                            <small class="text-muted d-block">Miejsce</small>
-                            <span class="badge bg-light text-dark border">Sektor {{ detail.ticket.seat }}</span>
+
+                        <div class="col-6 px-2 text-end">
+                            {% if detail.ticket.event.has_numbered_seats %}
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Location</small>
+                                <div class="fw-bold text-dark">
+                                    Sec {{ detail.ticket.sector|default:"-" }}<br>
+                                    Row {{ detail.ticket.row|default:"-" }} | Seat {{ detail.ticket.seat|default:"-" }}
+                                </div>
+                            {% else %}
+                                <small class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem;">Location</small>
+                                <div class="fw-bold text-primary mt-1">
+                                    <i class="bi bi-people-fill"></i> Gen. Adm.
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
 
-                    <div class="bg-light p-2 rounded mb-3 text-center">
-                        <code class="small text-muted">{{ detail.ticket_uuid }}</code>
+                    <div class="text-center mb-4">
+                        <small class="text-muted">Ticket ID</small><br>
+                        <code class="bg-light px-3 py-1 rounded text-dark fw-bold border">{{ detail.ticket_uuid|stringformat:"s"|slice:":8" }}...</code>
                     </div>
 
-                    <div class="d-grid gap-2">
-                        <button type="button" class="btn btn-dark" data-bs-toggle="modal" data-bs-target="#qrModal{{ detail.id }}">
-                            <i class="bi bi-qr-code"></i> Pokaż kod QR
+                    <div class="mt-auto d-grid gap-2">
+                        <button type="button" class="btn btn-dark btn-lg rounded-pill shadow-sm" data-bs-toggle="modal" data-bs-target="#qrModal{{ detail.id }}">
+                            <i class="bi bi-qr-code-scan me-2"></i> Show QR Code
                         </button>
 
                         {% if detail.order.tickets_pdf %}
-                            <a href="{{ detail.order.tickets_pdf.url }}" class="btn btn-outline-primary" target="_blank">
-                                <i class="bi bi-file-earmark-pdf"></i> Pobierz PDF (Zamówienie #{{ detail.order.id }})
+                            <a href="{{ detail.order.tickets_pdf.url }}" class="btn btn-outline-primary rounded-pill fw-bold" target="_blank">
+                                <i class="bi bi-file-earmark-pdf me-1"></i> Download PDF
                             </a>
                         {% else %}
-                            <button class="btn btn-outline-secondary disabled">
-                                <span class="spinner-border spinner-border-sm"></span> Generowanie PDF...
+                            <button class="btn btn-outline-secondary rounded-pill disabled">
+                                <span class="spinner-border spinner-border-sm me-1"></span> Generating PDF...
                             </button>
                         {% endif %}
                     </div>
@@ -58,25 +72,33 @@
         </div>
 
         <div class="modal fade" id="qrModal{{ detail.id }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content text-center py-4">
-                    <div class="modal-body">
-                        <h4>{{ detail.ticket.event.name }}</h4>
-                        <p class="text-muted">Bilet dla: {{ detail.participant.first_name }} {{ detail.participant.last_name }}</p>
+            <div class="modal-dialog modal-dialog-centered modal-sm">
+                <div class="modal-content border-0 shadow-lg rounded-4 text-center p-3">
+                    <div class="modal-header border-0 pb-0 justify-content-end">
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body pt-0">
+                        <h5 class="fw-bold mb-0">{{ detail.ticket.event.name }}</h5>
+                        <p class="text-muted small mb-4">{{ detail.participant.first_name }} {{ detail.participant.last_name }}</p>
 
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=250x250&data={{ request.scheme }}://{{ request.get_host }}{% url 'scan_ticket' detail.ticket_uuid %}"
-                            alt="QR Code" class="img-fluid my-3 shadow-sm p-2 bg-white">
+                        <div class="bg-light p-3 rounded-4 d-inline-block shadow-sm mb-3 border">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ request.scheme }}://{{ request.get_host }}{% url 'scan_ticket' detail.ticket_uuid %}"
+                                alt="QR Code" class="img-fluid rounded">
+                        </div>
 
-                        <p class="mt-2 small text-uppercase fw-bold">Zeskanuj przy wejściu</p>
-                        <button type="button" class="btn btn-secondary mt-3" data-bs-dismiss="modal">Zamknij</button>
+                        <p class="mt-2 small text-uppercase fw-bold text-primary tracking-wide">Ready to Scan</p>
                     </div>
                 </div>
             </div>
         </div>
         {% empty %}
-        <div class="col-12 text-center py-5">
-            <h3 class="text-muted">Brak aktywnych biletów.</h3>
-            <a href="{% url 'events' %}" class="btn btn-primary mt-3">Przeglądaj wydarzenia</a>
+        <div class="col-12 text-center py-5 mt-4">
+            <div class="bg-light rounded-circle d-inline-flex p-4 mb-3 shadow-sm">
+                <i class="bi bi-ticket-detailed display-3 text-muted"></i>
+            </div>
+            <h3 class="fw-bold">No active tickets found</h3>
+            <p class="text-muted">You don't have any upcoming events at the moment.</p>
+            <a href="{% url 'events' %}" class="btn btn-primary btn-lg rounded-pill px-5 shadow-sm mt-3">Browse Events</a>
         </div>
         {% endfor %}
     </div>
@@ -84,15 +106,14 @@
 
 <style>
     .ticket-card {
-        transition: transform 0.2s;
-        border-radius: 15px;
-        overflow: hidden;
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
     }
     .ticket-card:hover {
         transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
     }
-    .card-header {
-        border-bottom: 2px dashed rgba(255,255,255,0.3);
+    .tracking-wide {
+        letter-spacing: 2px;
     }
 </style>
 {% endblock %}

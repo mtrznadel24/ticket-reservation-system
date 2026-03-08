@@ -1,39 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}Skaner Bramkowy{% endblock %}
+{% block title %}Gate Scanner | My Tickets{% endblock %}
 
 {% block content %}
-<div class="container text-center mt-4 max-w-sm mx-auto" style="max-width: 500px;">
-    <h2>Skaner Biletów</h2>
-    <p class="text-muted">Nakieruj aparat na kod QR klienta</p>
+<div class="container py-5 text-center" style="max-width: 600px;">
+    <div class="mb-4">
+        <i class="bi bi-upc-scan display-4 text-primary"></i>
+        <h2 class="fw-bold mt-2">Ticket Scanner</h2>
+        <p class="text-muted">Point your camera at the attendee's QR code</p>
+    </div>
 
-    <div id="reader" width="100%" class="shadow-sm border rounded bg-light mb-3"></div>
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden mb-4">
+        <div id="reader" width="100%" class="bg-dark"></div>
+    </div>
 
-    <div id="result" class="alert alert-info" style="display: none;">
-        Skanowanie...
+    <div id="result" class="alert alert-success fw-bold shadow-sm" style="display: none;">
+        <i class="bi bi-check-circle me-2"></i> Code found! Redirecting...
     </div>
 </div>
 
 <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
-
 <script>
     function onScanSuccess(decodedText, decodedResult) {
         html5QrcodeScanner.clear();
-
         document.getElementById('result').style.display = 'block';
-        document.getElementById('result').innerText = "Znaleziono kod! Przekierowywanie...";
-
         window.location.href = decodedText;
     }
 
     function onScanFailure(error) {
+        // Ignoring scanning errors
     }
 
     let html5QrcodeScanner = new Html5QrcodeScanner(
         "reader",
         { fps: 10, qrbox: {width: 250, height: 250} },
-        /* verbose= */ false);
-    
+        false);
+
     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 </script>
+
+<style>
+    #reader { border: none !important; }
+    #reader__dashboard_section_csr button {
+        background-color: #0d6efd; color: white; border: none; padding: 8px 16px; border-radius: 20px; margin-top: 10px;
+    }
+</style>
 {% endblock %}

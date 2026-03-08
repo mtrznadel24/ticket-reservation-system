@@ -8,7 +8,7 @@ stripe.api_key = settings.STRIPE_SECRET_KEY
 def create_stripe_checkout_session(request, order):
 
     success_url = request.build_absolute_uri(reverse('finalize_cart'))
-    cancel_url = request.build_absolute_uri(reverse('payment_cancelled'))
+    cancel_url = request.build_absolute_uri(reverse('payment_canceled'))
 
     session = stripe.checkout.Session.create(
         payment_method_types=['card'],

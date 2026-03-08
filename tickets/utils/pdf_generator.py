@@ -46,17 +46,18 @@ def draw_tickets_to_buffer(tickets_data):
         p.setFillColor(HexColor("#000000"))
 
         p.setFont("Helvetica-Bold", 16)
-        p.drawString(box_x + 20, box_y + box_h - 35, f"WYDARZENIE: {data['event_name']}")
+        p.drawString(box_x + 20, box_y + box_h - 35, f"EVENT: {data['event_name']}")
 
         p.setFont("Helvetica", 12)
-        p.drawString(box_x + 20, box_y + box_h - 60, f"Uczestnik: {data['name']}")
+        p.drawString(box_x + 20, box_y + box_h - 60, f"PARTICIPANT: {data['name']}")
 
-        p.setFont("Helvetica-Bold", 12)
-        p.setFillColor(HexColor("#E74C3C"))
-        p.drawString(box_x + 20, box_y + box_h - 80, f"SEKTOR: {data['sector']}   |   RZĄD: {data['row']}")
+        if data.get("has_numbered_seats"):
+            p.setFont("Helvetica-Bold", 12)
+            p.setFillColor(HexColor("#E74C3C"))
+            p.drawString(box_x + 20, box_y + box_h - 80, f"SECTOR: {data['sector']}   |   ROW: {data['row']}")
 
-        p.setFont("Helvetica-Bold", 14)
-        p.drawString(box_x + 20, box_y + box_h - 100, f"MIEJSCE: {data['seat']}")
+            p.setFont("Helvetica-Bold", 14)
+            p.drawString(box_x + 20, box_y + box_h - 100, f"SEAT: {data['seat']}")
 
         p.setFillColor(HexColor("#7F8C8D"))
         p.setFont("Helvetica-Oblique", 8)

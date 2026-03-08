@@ -1,74 +1,94 @@
 {% extends "base.html" %}
 
-{% block title %}Skaner Biletów{% endblock %}
+{% block title %}Ticket Verification | My Tickets{% endblock %}
 
 {% block content %}
-<div class="container mt-4 max-w-sm mx-auto" style="max-width: 500px;">
-    
+<div class="container py-4" style="max-width: 500px;">
+
     {% if messages %}
         {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show text-center fw-bold" role="alert">
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show text-center fw-bold shadow-sm rounded-pill" role="alert">
                 {{ message }}
                 <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
             </div>
         {% endfor %}
     {% endif %}
 
-    <div class="card shadow-sm border-0">
-        <div class="card-header text-center text-white {% if detail.scanned_at %}bg-danger{% else %}bg-primary{% endif %} py-3">
-            <h4 class="mb-0">WERYFIKACJA BILETU</h4>
+    <div class="card shadow-lg border-0 rounded-4 overflow-hidden">
+        <div class="card-header text-center text-white py-3 border-0 {% if detail.scanned_at %}bg-danger{% else %}bg-success{% endif %}">
+            <h4 class="mb-0 fw-bold tracking-wide">
+                {% if detail.scanned_at %}<i class="bi bi-x-octagon-fill me-2"></i> ALREADY SCANNED {% else %}<i class="bi bi-shield-check me-2"></i> VALID TICKET {% endif %}
+            </h4>
         </div>
-        
-        <div class="card-body text-center">
-            <h5 class="text-muted mb-1">{{ detail.ticket.event.name }}</h5>
-            
-            <hr>
-            
-            <p class="mb-1 text-uppercase text-muted small">Uczestnik</p>
-            <h2 class="mb-3">{{ detail.participant.first_name }} {{ detail.participant.last_name }}</h2>
 
-            <p class="text-secondary fw-bold mb-3">
-                PESEL: <span class="badge bg-secondary fs-6">{{ masked_pesel }}</span>
-            </p>
-            
-            <div class="bg-light rounded p-3 mb-4">
-                <div class="row text-center text-danger fw-bold fs-5">
-                    <div class="col-4">
-                        <small class="d-block text-muted text-uppercase fs-6">Sektor</small>
-                        {{ detail.ticket.sector }}
+        <div class="card-body text-center p-4">
+            <h5 class="text-primary fw-bold mb-1">{{ detail.ticket.event.name }}</h5>
+            <p class="small text-muted mb-4"><i class="bi bi-calendar-event me-1"></i> {{ detail.ticket.event.start_datetime|date:"d M Y, H:i" }}</p>
+
+            <hr class="opacity-10 mb-4">
+
+            <p class="mb-1 text-uppercase text-muted small fw-bold">Attendee</p>
+            <h2 class="mb-3 fw-bold">{{ detail.participant.first_name }} {{ detail.participant.last_name }}</h2>
+
+            {% if detail.ticket.event.need_pesel %}
+            <div class="mb-4">
+                <span class="text-secondary fw-bold me-2">PESEL ID:</span>
+                <span class="badge bg-dark fs-6 rounded-pill px-3 py-2 shadow-sm">{{ masked_pesel }}</span>
+            </div>
+            {% endif %}
+
+            <div class="bg-light rounded-4 p-3 mb-4 border">
+                {% if detail.ticket.event.has_numbered_seats %}
+                    <div class="row text-center text-primary fw-bold fs-5">
+                        <div class="col-4">
+                            <small class="d-block text-muted text-uppercase fs-6" style="font-size:0.7rem;">Sector</small>
+                            {{ detail.ticket.sector }}
+                        </div>
+                        <div class="col-4 border-start border-end">
+                            <small class="d-block text-muted text-uppercase fs-6" style="font-size:0.7rem;">Row</small>
+                            {{ detail.ticket.row }}
+                        </div>
+                        <div class="col-4">
+                            <small class="d-block text-muted text-uppercase fs-6" style="font-size:0.7rem;">Seat</small>
+                            {{ detail.ticket.seat }}
+                        </div>
                     </div>
-                    <div class="col-4 border-start border-end">
-                        <small class="d-block text-muted text-uppercase fs-6">Rząd</small>
-                        {{ detail.ticket.row }}
+                {% else %}
+                    <div class="text-center text-primary fw-bold fs-4 py-2">
+                        <i class="bi bi-people-fill me-2"></i> GENERAL ADMISSION
                     </div>
-                    <div class="col-4">
-                        <small class="d-block text-muted text-uppercase fs-6">Miejsce</small>
-                        {{ detail.ticket.seat }}
-                    </div>
-                </div>
+                {% endif %}
             </div>
 
             {% if detail.scanned_at %}
-                <div class="alert alert-danger fw-bold fs-5">
-                    BILET JUŻ ZESKANOWANY!<br>
-                    <small class="fw-normal">{{ detail.scanned_at|date:"d.m.Y H:i:s" }}</small>
+                <div class="alert alert-danger fw-bold fs-5 rounded-4 shadow-sm border-0">
+                    ENTRY DENIED<br>
+                    <small class="fw-normal fs-6 text-dark d-block mt-2">Scanned on: {{ detail.scanned_at|date:"d M Y, H:i:s" }}</small>
                 </div>
-                <a href="{% url 'scan_preview' %}" class="btn btn-secondary w-100 btn-lg">Skanuj kolejny bilet</a>
+                <a href="{% url 'scan_preview' %}" class="btn btn-secondary w-100 btn-lg rounded-pill fw-bold mt-2 shadow-sm">
+                    <i class="bi bi-qr-code-scan me-2"></i> Scan Next Ticket
+                </a>
             {% else %}
-                <form method="POST" action="">
+                <form method="POST" action="" class="mb-2">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-success btn-lg w-100 mb-3 py-3 fw-bold fs-5">
-                        ZATWIERDŹ WEJŚCIE
+                    <button type="submit" class="btn btn-success btn-lg w-100 py-3 fw-bold fs-5 rounded-pill shadow">
+                        <i class="bi bi-check2-circle me-2"></i> APPROVE ENTRY
                     </button>
                 </form>
-                
-                <a href="{% url 'scan_preview' %}" class="btn btn-outline-danger w-100 btn-lg mb-2">ODRZUĆ / BŁĘDNE DANE</a>
+
+                <a href="{% url 'scan_preview' %}" class="btn btn-outline-danger w-100 btn-lg rounded-pill fw-bold mt-3">
+                    <i class="bi bi-x-circle me-2"></i> REJECT / INVALID ID
+                </a>
             {% endif %}
 
         </div>
-        <div class="card-footer text-muted text-center small">
-            ID: {{ detail.ticket_uuid }}
+        <div class="card-footer bg-white border-0 text-muted text-center pb-3 small">
+            Ticket ID: <code>{{ detail.ticket_uuid }}</code>
         </div>
     </div>
 </div>
+
+<style>
+    .tracking-wide { letter-spacing: 2px; }
+</style>
 {% endblock %}

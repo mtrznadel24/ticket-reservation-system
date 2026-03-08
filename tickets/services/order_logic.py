@@ -68,6 +68,10 @@ def reserve_tickets(user, ticket_ids):
 @transaction.atomic
 def update_participants_details(user, data_list, order_details):
     for data, detail in zip(data_list, order_details):
+        if detail.ticket.event.need_pesel and not data.get("pesel"):
+            raise ValidationError(
+                f"PESEL is strictly required for the event: {detail.ticket.event.name}"
+            )
 
         if detail.participant:
             participant = detail.participant
@@ -119,7 +123,13 @@ def cancel_order_service(user, order_id):
     if order.status == "canceled":
         raise ValidationError("Zamówienie zostało już anulowane")
 
-    order_details = OrderDetails.objects.filter(order=order).select_related("ticket")
+    order_details = OrderDetails.objects.filter(order=order).select_related("ticket", "ticket__event")
+
+    now = timezone.now()
+    for detail in order_details:
+        if detail.ticket.event.start_datetime < now:
+            raise ValidationError(
+                f"Cannot cancel: The event '{detail.ticket.event.name}' has already started or passed.")
 
     tickets_to_update = []
 

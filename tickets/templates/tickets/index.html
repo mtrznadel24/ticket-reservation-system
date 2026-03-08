@@ -1,31 +1,103 @@
 {% extends "base.html" %}
 
-{% block title %}Strona Główna - My Tickets App{% endblock %}
+{% block title %}Home | My Tickets{% endblock %}
 
 {% block content %}
-    <div class="p-5 mb-4 bg-light rounded-3">
-        <div class="container-fluid py-5">
-            <h1 class="display-5 fw-bold">Witaj w My Tickets App!</h1>
-            <p class="col-md-8 fs-4">Twoje miejsce do zarządzania biletami na najlepsze wydarzenia. Przeglądaj, kupuj i miej wszystko pod kontrolą.</p>
-            <a href="{% url 'events' %}" class="btn btn-success btn-lg" type="button">Zobacz dostępne wydarzenia</a>
+<div class="bg-primary text-white text-center py-5 mb-5 rounded-4 shadow-sm" style="background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%); margin-top: -1.5rem;">
+    <div class="container py-5">
+        <h1 class="display-4 fw-bolder mb-3 shadow-sm-text">Find Your Next Experience</h1>
+        <p class="fs-5 mb-5 col-md-8 mx-auto text-light opacity-75">
+            Discover the best concerts, matches, and exclusive events happening around you.
+        </p>
 
-        </div>
-    </div>
-
-    <div class="row align-items-md-stretch">
-        <div class="col-md-6">
-            <div class="h-100 p-5 text-white bg-dark rounded-3">
-                <h2>Twoje Zamówienia</h2>
-                <p>Sprawdź historię swoich zamówień i pobierz zakupione bilety w dowolnym momencie.</p>
-                <a href="{% url 'my_orders' %}" class="btn btn-outline-light" type="button">Przejdź do moich zamówień</a>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <div class="h-100 p-5 bg-light border rounded-3">
-                <h2>Twój Koszyk</h2>
-                <p>Masz coś w koszyku? Dokończ swoje zamówienie i ciesz się nadchodzącymi wydarzeniami.</p>
-                <a href="{% url 'cart' %}" class="btn btn-outline-secondary" type="button">Zobacz koszyk</a>
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-7">
+                <form method="get" action="{% url 'events' %}" class="d-flex bg-white p-2 m-2  rounded-pill shadow-lg gap-2">
+                    <input type="text" name="search" class="form-control border-0 rounded-pill fs-5 ps-4" placeholder="Search for events..." required>
+                    <button type="submit" class="btn btn-dark rounded-pill px-4 px-md-5 fs-5 fw-bold transition-all">
+                        <i class="bi bi-search me-2 d-none d-md-inline"></i>Search
+                    </button>
+                </form>
             </div>
         </div>
     </div>
+</div>
+
+<div class="container mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3 class="fw-bold mb-0">Upcoming Events</h3>
+        <a href="{% url 'events' %}" class="btn btn-outline-primary btn-sm fw-bold rounded-pill px-3">
+            View All <i class="bi bi-arrow-right"></i>
+        </a>
+    </div>
+
+    <div class="row g-4">
+        {% for event in latest_events %}
+            <div class="col-md-6 col-lg-4">
+                <div class="card h-100 shadow-sm border-0 rounded-4 overflow-hidden event-card">
+                    <div class="position-relative overflow-hidden" style="height: 160px;">
+                        {% if event.image %}
+                            <img src="{{ event.image.url }}" class="w-100 h-100 object-fit-cover event-img-zoom" alt="{{ event.name }}">
+                        {% else %}
+                            <div class="w-100 h-100 d-flex align-items-center justify-content-center p-3 position-relative overflow-hidden bg-dark"
+                                 style="background: linear-gradient(135deg, #1a1c1e 0%, #0d6efd 100%); min-height: 160px;">
+
+                                <i class="bi bi-ticket-perforated position-absolute text-white opacity-40"
+                                   style="font-size: 6rem; right: -15px; bottom: -20px; z-index: 0;"></i>
+
+                                <div class="fs-3 fw-bold text-white opacity-25 text-center" style="z-index: 1;">
+                                    {{ event.name|upper }}
+                                </div>
+
+                            </div>
+                        {% endif %}
+
+                        <span class="position-absolute top-0 end-0 m-3 badge rounded-pill bg-primary shadow-sm">
+                            Upcoming
+                        </span>
+                    </div>
+
+                    <div class="card-body d-flex flex-column p-4">
+                        <div class="mb-2">
+                            <span class="badge bg-light text-primary border border-primary-subtle fw-semibold">
+                                <i class="bi bi-calendar3 me-1"></i> {{ event.start_datetime|date:"d M Y" }}
+                            </span>
+                            <span class="badge bg-light text-dark border fw-semibold">
+                                <i class="bi bi-clock me-1"></i> {{ event.start_datetime|date:"H:i" }}
+                            </span>
+                        </div>
+
+                        <h4 class="card-title fw-bold mb-3">{{ event.name }}</h4>
+
+                        <p class="card-text text-muted mb-4 small">
+                            <i class="bi bi-geo-alt-fill text-danger me-1"></i> {{event.location}}<br>
+                            <i class="bi bi-ticket-perforated-fill text-success me-1"></i>
+                            {{ event.available_count }} spots left
+                        </p>
+
+                        <div class="mt-auto">
+                            <a href="{% url 'tickets' event.id %}" class="btn btn-outline-dark w-100 rounded-pill fw-bold">
+                                View Tickets <i class="bi bi-chevron-right ms-1"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <p class="text-muted fs-5">No upcoming events right now. Check back later!</p>
+            </div>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+    .event-card {
+        transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .event-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+</style>
 {% endblock %}

@@ -33,12 +33,12 @@ class ParticipantForm(forms.Form):
     pesel = forms.CharField(
         min_length=11,
         max_length=11,
-        required=True,
+        required=False,
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'PESEL'})
     )
 
     def clean_pesel(self):
         pesel = self.cleaned_data["pesel"]
-        if not pesel.isdigit():
+        if pesel and not pesel.isdigit():
             raise forms.ValidationError("Pesel musi składać się wyłącznie z cyfr")
         return pesel

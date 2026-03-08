@@ -1,3 +1,5 @@
+import uuid
+
 from celery import shared_task
 from django.core.files.base import ContentFile
 
@@ -22,6 +24,7 @@ def generate_tickets_pdf_task(order_id):
         order = order_details[0].order
 
         tickets_data = [{
+            'has_numbered_seats': d.ticket.event.has_numbered_seats,
             'event_name': f"{d.ticket.event.name}",
             'name': f"{d.participant.first_name} {d.participant.last_name}",
             'sector': f"{d.ticket.sector}",
@@ -32,7 +35,8 @@ def generate_tickets_pdf_task(order_id):
 
         buffer = draw_tickets_to_buffer(tickets_data)
 
-        pdf_name = f"order_{order_id}_tickets.pdf"
+        unique_uuid = uuid.uuid4().hex
+        pdf_name = f"order_{order_id}_tickets_{unique_uuid}.pdf"
         order.tickets_pdf.save(pdf_name, ContentFile(buffer.getvalue()), save=True)
 
         buffer.close()

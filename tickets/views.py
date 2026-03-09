@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 import stripe
 from django.conf import settings
 from django.contrib.auth import login
@@ -135,11 +137,22 @@ def tickets_view(request, event_id):
 def cart_view(request):
     """Display the cart page with filling forms"""
     try:
+        now = timezone.now()
         order = Order.objects.get(user=request.user, status=Order.Status.PENDING)
         order_details = OrderDetails.objects.filter(order=order).select_related(
             "participant", "ticket", "ticket__event"
         )
         total = order.total_price()
+
+        if order_details and order_details[0].ticket.reserved_until < now:
+            tickets = [d.ticket for d in order_details]
+            for ticket in tickets:
+                ticket.status = Ticket.Status.AVAILABLE
+                ticket.reserved_until = None
+            Ticket.objects.bulk_update(tickets, ["status", "reserved_until"])
+
+            order.delete()
+            return redirect("cart")
 
     except Order.DoesNotExist:
         order = None
@@ -149,23 +162,23 @@ def cart_view(request):
     ParticipantFormSet = formset_factory(ParticipantForm, extra=len(order_details))
 
     if request.method == "POST":
+        for detail in order_details:
+            if detail.ticket.reserved_until < timezone.now():
+                messages.error(request, "Reservation time out. Your cart has been cleared.")
+                return redirect("cart")
         formset = ParticipantFormSet(request.POST)
         if formset.is_valid():
-            print("--- DEBUG: Formset jest VALID ---")
             try:
-                print(f"--- DEBUG: Próba utworzenia sesji Stripe dla zamówienia {order.id} ---")
                 session = create_stripe_checkout_session(request, order)
-                print(f"--- DEBUG: Sesja utworzona: {session.url}")
-
                 update_participants_details(request.user, formset.cleaned_data, order_details)
+                expire_time = timezone.now() + timedelta(minutes=15)
+                for detail in order_details:
+                    detail.ticket.reserved_until = expire_time
                 return redirect(session.url, code=303)
 
             except Exception as e:
-                print(f"--- DEBUG: BŁĄD STRIPE/LOGIKI: {str(e)}")
                 messages.error(request, f"Błąd: {str(e)}")
         else:
-            print("BŁĘDY FORMSETU:", formset.errors)
-            print("BŁĘDY NON_FORM:", formset.non_form_errors())
             messages.error(request, "Błędy w formularzu")
     else:
         initial_data = [
@@ -180,10 +193,14 @@ def cart_view(request):
 
     forms_with_details = list(zip(order_details, formset))
 
+    expiry_time = None
+    if order_details:
+        expiry_time = order_details[0].ticket.reserved_until.isoformat()
+
     return render(
         request,
         "tickets/cart.html",
-        {"order": order, "total": total, 'formset': formset, "forms_with_details": forms_with_details},
+        {"order": order, "total": total, 'formset': formset, "forms_with_details": forms_with_details, "expiry_time": expiry_time},
     )
 
 

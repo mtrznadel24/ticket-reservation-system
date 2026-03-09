@@ -105,6 +105,15 @@
                         <div class="card-body p-4 p-md-5 bg-dark text-white rounded-4">
                             <h4 class="fw-bold mb-4">Order Summary</h4>
 
+                            {% if expiry_time %}
+                            <div class="alert alert-warning border-0 bg-warning text-dark d-flex align-items-center mb-4 rounded-3 shadow-sm" role="alert">
+                                <i class="bi bi-stopwatch-fill fs-4 me-3"></i>
+                                <div>
+                                    <span class="small fw-bold text-uppercase d-block" style="letter-spacing: 1px;">Reserved for</span>
+                                    <span id="countdown-timer" class="fs-4 fw-bold" data-expiry="{{ expiry_time }}">00:00</span>
+                                </div>
+                            </div>
+                            {% endif %}
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-white-50">Tickets:</span>
                                 <span class="fw-bold fs-5">{{ forms_with_details|length }}</span>
@@ -150,4 +159,43 @@
         </div>
     {% endif %}
 </div>
+
+{% if expiry_time %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const timerElement = document.getElementById('countdown-timer');
+        if (!timerElement) return;
+
+        const expiryDate = new Date(timerElement.getAttribute('data-expiry')).getTime();
+
+        const timerInterval = setInterval(function() {
+            const now = new Date().getTime();
+            const distance = expiryDate - now;
+
+            if (distance < 0) {
+                clearInterval(timerInterval);
+                timerElement.innerHTML = "EXPIRED";
+
+                window.location.reload();
+                return;
+            }
+
+            const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+            const formattedMinutes = minutes < 10 ? "0" + minutes : minutes;
+            const formattedSeconds = seconds < 10 ? "0" + seconds : seconds;
+
+            timerElement.innerHTML = formattedMinutes + ":" + formattedSeconds;
+
+            if (distance < 120000) {
+                const alertBox = timerElement.closest('.alert');
+                alertBox.classList.remove('bg-warning', 'text-dark');
+                alertBox.classList.add('bg-danger', 'text-white');
+            }
+
+        }, 1000);
+    });
+</script>
+{% endif %}
 {% endblock %}

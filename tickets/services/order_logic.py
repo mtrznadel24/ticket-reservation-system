@@ -35,8 +35,7 @@ def unlock_expired_tickets():
             .exclude(ticket__status=Ticket.Status.AVAILABLE)
             .exists()
         ):
-            order.status = Order.Status.CANCELED
-            order.save()
+            order.delete()
 
 
 
@@ -47,20 +46,42 @@ def reserve_tickets(user, ticket_ids):
 
     order, _ = Order.objects.get_or_create(user=user, status=Order.Status.PENDING)
 
+    existing_details = list(OrderDetails.objects.select_related("ticket").filter(order=order))
+
+    if existing_details and existing_details[0].ticket.reserved_until < timezone.now():
+        tickets_to_release = [d.ticket for d in existing_details]
+        for ticket in tickets_to_release:
+            ticket.status = Ticket.Status.AVAILABLE
+            ticket.reserved_until = None
+        Ticket.objects.bulk_update(tickets_to_release, ["status", "reserved_until"])
+
+        order.delete()
+        order = Order.objects.create(user=user, status=Order.Status.PENDING)
+        existing_details = []
+
+    tickets_in_cart = [d.ticket for d in existing_details]
     tickets = list(Ticket.objects.select_for_update().filter(id__in=ticket_ids).order_by('id'))
+
+    if len(tickets) + len(tickets_in_cart) > 8:
+        raise ValidationError(f"Too many tickets in cart.")
+
     tickets_to_update = []
     order_details_to_create = []
+    expiry_time = timezone.now() + timedelta(minutes=10)
 
     for ticket in tickets:
-
         if ticket.status != Ticket.Status.AVAILABLE:
             raise ValidationError(f"Bilet {ticket.seat} jest już niedostępny.")
 
         ticket.status = Ticket.Status.RESERVED
-        ticket.reserved_until = timezone.now() + timedelta(minutes=2)
+        ticket.reserved_until = expiry_time
         tickets_to_update.append(ticket)
 
         order_details_to_create.append(OrderDetails(order=order, participant=None, ticket=ticket))
+
+    for ticket in tickets_in_cart:
+        ticket.reserved_until = expiry_time
+        tickets_to_update.append(ticket)
 
     OrderDetails.objects.bulk_create(order_details_to_create)
     Ticket.objects.bulk_update(tickets_to_update, ["status", "reserved_until"])

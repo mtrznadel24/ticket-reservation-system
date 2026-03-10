@@ -42,7 +42,7 @@ def unlock_expired_tickets():
 @transaction.atomic
 def reserve_tickets(user, ticket_ids):
     if not ticket_ids:
-        raise ValidationError("Nie wybrano żadnych biletów")
+        raise ValidationError("No tickets selected")
 
     order, _ = Order.objects.get_or_create(user=user, status=Order.Status.PENDING)
 
@@ -71,7 +71,7 @@ def reserve_tickets(user, ticket_ids):
 
     for ticket in tickets:
         if ticket.status != Ticket.Status.AVAILABLE:
-            raise ValidationError(f"Bilet {ticket.seat} jest już niedostępny.")
+            raise ValidationError(f"Ticket {ticket.seat} is not available.")
 
         ticket.status = Ticket.Status.RESERVED
         ticket.reserved_until = expiry_time
@@ -139,10 +139,10 @@ def cancel_order_service(user, order_id):
     try:
         order = Order.objects.get(id=order_id, user=user)
     except Order.DoesNotExist:
-        raise ValidationError("Zamówienie nie istnieje")
+        raise ValidationError("Order does not exist.")
 
     if order.status == "canceled":
-        raise ValidationError("Zamówienie zostało już anulowane")
+        raise ValidationError("Order is already canceled.")
 
     order_details = OrderDetails.objects.filter(order=order).select_related("ticket", "ticket__event")
 

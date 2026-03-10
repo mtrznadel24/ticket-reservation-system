@@ -125,7 +125,7 @@ class Order(models.Model):
 
 
 class OrderDetails(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE)
+    order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name="details")
     participant = models.ForeignKey(Participant, null=True, blank=True, on_delete=models.CASCADE)
     ticket = models.ForeignKey(Ticket, on_delete=models.CASCADE)
     ticket_uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)

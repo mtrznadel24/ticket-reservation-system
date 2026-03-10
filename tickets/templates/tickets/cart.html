@@ -3,9 +3,18 @@
 
 {% block content %}
 <div class="container py-5">
-    <div class="d-flex align-items-center mb-5">
-        <i class="bi bi-cart3 display-5 text-primary me-3"></i>
-        <h1 class="fw-bold mb-0">Secure Checkout</h1>
+    <div class="d-flex align-items-center justify-content-between mb-5">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-cart3 display-5 text-primary me-3"></i>
+            <h1 class="fw-bold mb-0">Secure Checkout</h1>
+        </div>
+
+        {% if forms_with_details %}
+        <a href="{% url 'cart_clear' %}" class="btn btn-outline-danger fw-bold rounded-pill px-4 shadow-sm"
+           onclick="return confirm('Are you sure you want to remove all tickets and reset your timer?');">
+            <i class="bi bi-trash3 me-2"></i> Empty Cart
+        </a>
+        {% endif %}
     </div>
 
     {% if forms_with_details %}
@@ -18,7 +27,8 @@
                     <h4 class="fw-bold mb-4">Participant Details</h4>
 
                     {% for detail, form in forms_with_details %}
-                        <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden">
+                        <div class="card shadow-sm border-0 rounded-4 mb-4 overflow-hidden position-relative">
+
                             <div class="card-header bg-dark text-white p-4 border-0 d-flex justify-content-between align-items-center">
                                 <div>
                                     <h5 class="mb-1 fw-bold">{{ detail.ticket.event.name }}</h5>
@@ -26,8 +36,16 @@
                                         <i class="bi bi-calendar3 me-1"></i> {{ detail.ticket.event.start_datetime|date:"d M Y, H:i" }}
                                     </span>
                                 </div>
-                                <div class="text-end">
+
+                                <div class="text-end d-flex align-items-center gap-3">
                                     <span class="badge bg-primary fs-6 rounded-pill px-3 py-2 shadow-sm">${{ detail.ticket.price }}</span>
+
+                                    <a href="{% url 'remove_from_cart' detail.ticket.id %}"
+                                       class="btn btn-sm btn-danger rounded-circle p-2 shadow"
+                                       title="Remove this ticket"
+                                       onclick="return confirm('Remove this ticket from cart?');">
+                                        <i class="bi bi-x-lg"></i>
+                                    </a>
                                 </div>
                             </div>
 
@@ -106,14 +124,19 @@
                             <h4 class="fw-bold mb-4">Order Summary</h4>
 
                             {% if expiry_time %}
-                            <div class="alert alert-warning border-0 bg-warning text-dark d-flex align-items-center mb-4 rounded-3 shadow-sm" role="alert">
-                                <i class="bi bi-stopwatch-fill fs-4 me-3"></i>
-                                <div>
-                                    <span class="small fw-bold text-uppercase d-block" style="letter-spacing: 1px;">Reserved for</span>
-                                    <span id="countdown-timer" class="fs-4 fw-bold" data-expiry="{{ expiry_time }}">00:00</span>
+                            <div class="alert alert-warning border-0 bg-warning text-dark mb-4 rounded-3 shadow-sm" role="alert">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="bi bi-stopwatch-fill fs-4 me-3"></i>
+                                    <div>
+                                        <span class="small fw-bold text-uppercase d-block" style="letter-spacing: 1px;">Reserved for</span>
+                                        <span id="countdown-timer" class="fs-4 fw-bold" data-expiry="{{ expiry_time }}">00:00</span>
+                                    </div>
                                 </div>
+                                <hr class="border-dark opacity-25 my-2">
+                                <small class="fw-semibold"><i class="bi bi-info-circle me-1"></i> If time runs out, your cart will be cleared. Empty the cart to reset this timer.</small>
                             </div>
                             {% endif %}
+
                             <div class="d-flex justify-content-between align-items-center mb-3">
                                 <span class="text-white-50">Tickets:</span>
                                 <span class="fw-bold fs-5">{{ forms_with_details|length }}</span>

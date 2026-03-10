@@ -38,7 +38,6 @@ def unlock_expired_tickets():
             order.delete()
 
 
-
 @transaction.atomic
 def reserve_tickets(user, ticket_ids):
     if not ticket_ids:
@@ -50,24 +49,23 @@ def reserve_tickets(user, ticket_ids):
 
     if existing_details and existing_details[0].ticket.reserved_until < timezone.now():
         tickets_to_release = [d.ticket for d in existing_details]
-        for ticket in tickets_to_release:
-            ticket.status = Ticket.Status.AVAILABLE
-            ticket.reserved_until = None
-        Ticket.objects.bulk_update(tickets_to_release, ["status", "reserved_until"])
-
-        order.delete()
+        release_order_tickets(order, tickets_to_release)
         order = Order.objects.create(user=user, status=Order.Status.PENDING)
         existing_details = []
 
-    tickets_in_cart = [d.ticket for d in existing_details]
+    tickets_in_cart_ids = [d.ticket.id for d in existing_details]
     tickets = list(Ticket.objects.select_for_update().filter(id__in=ticket_ids).order_by('id'))
 
-    if len(tickets) + len(tickets_in_cart) > 8:
+    if len(tickets) + len(tickets_in_cart_ids) > 8:
         raise ValidationError(f"Too many tickets in cart.")
 
     tickets_to_update = []
     order_details_to_create = []
-    expiry_time = timezone.now() + timedelta(minutes=10)
+
+    if existing_details:
+        expiry_time = existing_details[0].ticket.reserved_until
+    else:
+        expiry_time = timezone.now() + timedelta(minutes=15)
 
     for ticket in tickets:
         if ticket.status != Ticket.Status.AVAILABLE:
@@ -79,12 +77,19 @@ def reserve_tickets(user, ticket_ids):
 
         order_details_to_create.append(OrderDetails(order=order, participant=None, ticket=ticket))
 
-    for ticket in tickets_in_cart:
-        ticket.reserved_until = expiry_time
-        tickets_to_update.append(ticket)
-
     OrderDetails.objects.bulk_create(order_details_to_create)
     Ticket.objects.bulk_update(tickets_to_update, ["status", "reserved_until"])
+
+@transaction.atomic
+def release_order_tickets(order, tickets):
+
+    for ticket in tickets:
+        ticket.status = Ticket.Status.AVAILABLE
+        ticket.reserved_until = None
+    Ticket.objects.bulk_update(tickets, ["status", "reserved_until"])
+
+    order.delete()
+
 
 @transaction.atomic
 def update_participants_details(user, data_list, order_details):
@@ -107,6 +112,26 @@ def update_participants_details(user, data_list, order_details):
             )
             detail.save()
 
+
+@transaction.atomic
+def remove_from_cart(user, ticket_id):
+    try:
+        detail = OrderDetails.objects.get(ticket_id=ticket_id, order__user=user, order__status=Order.Status.PENDING)
+
+        ticket = detail.ticket
+        order = detail.order
+
+        ticket.status = Ticket.Status.AVAILABLE
+        ticket.reserved_until = None
+        ticket.save()
+
+        detail.delete()
+
+        if not order.details.exists():
+            order.delete()
+
+    except OrderDetails.DoesNotExist:
+        raise ValidationError("This ticket is not in your cart.")
 
 @transaction.atomic
 def finalize_order(order_id):

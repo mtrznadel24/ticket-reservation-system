@@ -12,7 +12,7 @@ from tickets.models import Event, Order, OrderDetails, Ticket, Participant
 
 
 @pytest.mark.django_db
-class TestViews():
+class TestPublicViews:
 
     def test_index_view(self, client):
         response = client.get(reverse('home'))
@@ -160,6 +160,65 @@ class TestPurchaseViews:
         assert response.url == url
 
         assert Order.objects.filter(id=pending_order.id).count() == 0
+
+    def test_remove_from_cart_view_success(self, client, test_user, reserved_ticket, pending_order):
+        client.force_login(test_user)
+
+        OrderDetails.objects.create(order=pending_order, ticket=reserved_ticket)
+        assert OrderDetails.objects.count() == 1
+
+        url = reverse('remove_from_cart', kwargs={'ticket_id': reserved_ticket.id})
+        response = client.get(url)
+
+        assert response.status_code == 302
+        assert response.url == reverse('cart')
+
+        reserved_ticket.refresh_from_db()
+        assert reserved_ticket.status == Ticket.Status.AVAILABLE
+        assert reserved_ticket.reserved_until is None
+
+        assert OrderDetails.objects.count() == 0
+        assert Order.objects.filter(id=pending_order.id).count() == 0
+
+    def test_remove_from_cart_view_invalid_ticket(self, client, test_user, future_event):
+        client.force_login(test_user)
+
+        other_ticket = Ticket.objects.create(
+            event=future_event, sector="A", row="1", seat="99", price="50.00", status=Ticket.Status.AVAILABLE
+        )
+
+        url = reverse('remove_from_cart', kwargs={'ticket_id': other_ticket.id})
+        response = client.get(url)
+
+        assert response.status_code == 302
+        assert response.url == reverse('cart')
+
+        from django.contrib.messages import get_messages
+        messages = list(get_messages(response.wsgi_request))
+        assert len(messages) > 0
+        assert "This ticket is not in your cart" in str(
+            messages[0])
+
+    def test_cart_clear_view_success(self, client, test_user, create_tickets, pending_order):
+        client.force_login(test_user)
+
+        tickets = create_tickets(3)
+        for t in tickets:
+            t.status = Ticket.Status.RESERVED
+            t.save()
+            OrderDetails.objects.create(order=pending_order, ticket=t)
+
+        assert OrderDetails.objects.count() == 3
+
+        url = reverse('cart_clear')
+        response = client.get(url)
+
+        assert response.status_code == 302
+
+        assert Ticket.objects.filter(status=Ticket.Status.AVAILABLE).count() >= 3
+
+        assert Order.objects.count() == 0
+        assert OrderDetails.objects.count() == 0
 
     @patch('tickets.views.finalize_order')
     @patch('tickets.views.stripe.checkout.Session.retrieve')

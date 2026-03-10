@@ -22,7 +22,7 @@ from tickets.services.order_logic import (
     reserve_tickets,
     update_participants_details,
     finalize_order,
-    cancel_order_service,
+    cancel_order_service, remove_from_cart, release_order_tickets,
 )
 from .services.stripe_service import create_stripe_checkout_session
 
@@ -146,12 +146,7 @@ def cart_view(request):
 
         if order_details and order_details[0].ticket.reserved_until < now:
             tickets = [d.ticket for d in order_details]
-            for ticket in tickets:
-                ticket.status = Ticket.Status.AVAILABLE
-                ticket.reserved_until = None
-            Ticket.objects.bulk_update(tickets, ["status", "reserved_until"])
-
-            order.delete()
+            release_order_tickets(order, tickets)
             return redirect("cart")
 
     except Order.DoesNotExist:
@@ -202,6 +197,34 @@ def cart_view(request):
         "tickets/cart.html",
         {"order": order, "total": total, 'formset': formset, "forms_with_details": forms_with_details, "expiry_time": expiry_time},
     )
+
+@login_required
+def cart_clear_view(request):
+    """Clear the user cart"""
+    try:
+        order = Order.objects.prefetch_related("details__ticket").get(user=request.user, status=Order.Status.PENDING)
+
+        details = order.details.all()
+        tickets = [d.ticket for d in details]
+
+        release_order_tickets(order, tickets)
+
+    except Order.DoesNotExist:
+        messages.error(request, "Order does not exist")
+
+    return redirect("cart")
+
+@login_required
+def remove_from_cart_view(request, ticket_id):
+    """Remove ticket from cart"""
+    try:
+        remove_from_cart(request.user, ticket_id)
+        messages.success(request, "Successfully removed from cart.")
+    except ValidationError as e:
+        messages.error(request, str(e))
+
+    return redirect("cart")
+
 
 
 @login_required
@@ -257,7 +280,7 @@ class MyOrdersView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         orders = (
             Order.objects.filter(user=self.request.user)
-            .annotate(total_calculated_price=Sum("orderdetails__ticket__price"))
+            .annotate(total_calculated_price=Sum("details__ticket__price"))
             .order_by("-updated_at")
         )
         return orders

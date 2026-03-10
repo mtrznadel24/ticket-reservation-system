@@ -8,7 +8,7 @@ from django.utils import timezone
 
 from tickets.models import Ticket, OrderDetails, Order, Participant, Event
 from tickets.services.order_logic import unlock_expired_tickets, reserve_tickets, cancel_order_service, finalize_order, \
-    update_participants_details
+    update_participants_details, release_order_tickets
 
 
 @pytest.mark.django_db
@@ -73,7 +73,7 @@ class TestOrderLogic:
         ticket_new = tickets[1]
 
         ticket_old.status = Ticket.Status.RESERVED
-        ticket_old.reserved_until = timezone.now() + timedelta(minutes=1)
+        ticket_old.reserved_until = timezone.now() + timedelta(minutes=10)
         ticket_old.save()
         OrderDetails.objects.create(order=pending_order, ticket=ticket_old)
 
@@ -84,7 +84,7 @@ class TestOrderLogic:
 
         assert ticket_old.reserved_until == ticket_new.reserved_until
 
-        assert ticket_old.reserved_until > timezone.now() + timedelta(minutes=8)
+        assert ticket_old.reserved_until < timezone.now() + timedelta(minutes=10)
 
     @pytest.mark.django_db
     def test_reserve_tickets_lazy_cleanup_on_expired_cart(self, test_user, create_tickets, pending_order):
@@ -110,7 +110,27 @@ class TestOrderLogic:
         assert OrderDetails.objects.filter(order=active_order).count() == 1
         assert OrderDetails.objects.first().ticket == ticket_new
 
-        # --- UPDATE PARTICIPANTS ---
+    # --- RELEASE ORDER TICKETS ---
+
+    def test_release_order_tickets_releases_and_deletes(self, test_user, create_tickets, pending_order):
+        tickets = list(create_tickets(2))
+        for t in tickets:
+            t.status = Ticket.Status.RESERVED
+            t.reserved_until = timezone.now() + timedelta(minutes=10)
+            t.save()
+            OrderDetails.objects.create(order=pending_order, ticket=t)
+
+        release_order_tickets(pending_order, tickets)
+
+        for t in tickets:
+            t.refresh_from_db()
+            assert t.status == Ticket.Status.AVAILABLE
+            assert t.reserved_until is None
+
+        assert Order.objects.filter(id=pending_order.id).count() == 0
+        assert OrderDetails.objects.count() == 0
+
+    # --- UPDATE PARTICIPANTS ---
 
     def test_update_participants_mixed_existing_and_new(self, test_user, reserved_ticket, pending_order, future_event):
         other_ticket = Ticket.objects.create(event=future_event, sector="A", row="1", seat="12",

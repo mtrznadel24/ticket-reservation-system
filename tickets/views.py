@@ -115,12 +115,12 @@ def tickets_view(request, event_id):
                 )
 
         if not selected_ticket_ids:
-            messages.error(request, "Nie wybrano żadnych biletów.")
+            messages.error(request, "No tickets selected.")
             return redirect("tickets", event_id=event_id)
 
         try:
             reserve_tickets(user=request.user, ticket_ids=selected_ticket_ids)
-            messages.success(request, "Bilety zostały dodane do koszyka.")
+            messages.success(request, "Tickets were added to cart successfully.")
             return redirect("cart")
 
         except ValidationError as e:
@@ -177,9 +177,9 @@ def cart_view(request):
                 return redirect(session.url, code=303)
 
             except Exception as e:
-                messages.error(request, f"Błąd: {str(e)}")
+                messages.error(request, f"Error: {str(e)}")
         else:
-            messages.error(request, "Błędy w formularzu")
+            messages.error(request, "Errors in the form")
     else:
         initial_data = [
             {
@@ -210,7 +210,7 @@ def finalize_cart(request):
     session_id = request.GET.get("session_id")
 
     if not session_id:
-        messages.error(request, "Brak identyfikatora sesji płatności.")
+        messages.error(request, "No payment session id provided.")
         return redirect("cart")
 
     try:
@@ -220,17 +220,17 @@ def finalize_cart(request):
 
         if session.payment_status == "paid":
             finalize_order(order_id)
-            messages.success(request, "Zakup zakończony sukcesem!")
+            messages.success(request, "Purchase was successful!")
             return redirect("payment_success", order_id=order_id)
         else:
-            messages.error(request, "Płatność nie została potwierdzona")
+            messages.error(request, "Payment was not confirmed")
             return redirect("cart")
 
     except Order.DoesNotExist:
-        messages.error(request, "Brak zamówienia do finalizacji.")
+        messages.error(request, "No order to finalize.")
         return redirect("home")
     except Exception as e:
-        messages.error(request, f"Wystąpił błąd podczas finalizacji zamówienia: {e}")
+        messages.error(request, f"Error occurred during finalizing  {e}")
         return redirect("cart")
 
 # User Dashboard
@@ -297,12 +297,12 @@ def cancel_order(request, order_id):
     """Cancel an order."""
     try:
         cancel_order_service(request.user, order_id)
-        messages.success(request, "Zamówienie zostało anulowane.")
+        messages.success(request, "Order was cancelled.")
 
     except ValidationError as e:
         messages.error(request, e.message)
     except Exception as e:
-        messages.error(request, f"Wystąpił błąd: {e}")
+        messages.error(request, f"There was an error {e}")
 
     return redirect("order_details", order_id=order_id)
 

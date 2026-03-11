@@ -1,0 +1,85 @@
+name: CI/CD Pipeline
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  test_and_lint:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ticket_db_test
+          POSTGRES_USER: test_user
+          POSTGRES_PASSWORD: test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Install dependencies
+        run: poetry install
+
+      - name: Run Ruff Lint
+        run: poetry run ruff check .
+
+      - name: Run Ruff Formatter
+        run: poetry run ruff format --check .
+
+      - name: Run pytest
+        env:
+          DEBUG: 'True'
+          SECRET_KEY: 'test-secret-key-123'
+          FIELD_ENCRYPTION_KEY: 'fake_encryption_key_for_tests_12345'
+          ALLOWED_HOSTS: 'localhost,127.0.0.1'
+
+          DB_NAME: ticket_db_test
+          DB_USER: test_user
+          DB_PASSWORD: test_password
+          DB_HOST: localhost
+          DB_PORT: 5432
+          CELERY_BROKER_URL: redis://localhost:6379/0
+
+          STRIPE_SECRET_KEY: 'sk_test_fake123'
+          STRIPE_PUBLISHABLE_KEY: 'pk_test_fake123'
+          STRIPE_WEBHOOK_SECRET: 'whsec_fake123'
+        run: poetry run pytest
+
+  deploy:
+    needs: test_and_lint
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        with:
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            cd ~/ticket-reservation-system
+            git pull
+            docker compose -f docker-compose.prod.yml up -d --build
+
+
+
+

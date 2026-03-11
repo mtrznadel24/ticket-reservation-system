@@ -12,7 +12,9 @@ from tickets.tasks import generate_tickets_pdf_task
 def unlock_expired_tickets():
     now = timezone.now()
 
-    expired_tickets = Ticket.objects.filter(status=Ticket.Status.RESERVED, reserved_until__lt=now)
+    expired_tickets = Ticket.objects.filter(
+        status=Ticket.Status.RESERVED, reserved_until__lt=now
+    )
 
     if not expired_tickets.exists():
         return
@@ -45,7 +47,9 @@ def reserve_tickets(user, ticket_ids):
 
     order, _ = Order.objects.get_or_create(user=user, status=Order.Status.PENDING)
 
-    existing_details = list(OrderDetails.objects.select_related("ticket").filter(order=order))
+    existing_details = list(
+        OrderDetails.objects.select_related("ticket").filter(order=order)
+    )
 
     if existing_details and existing_details[0].ticket.reserved_until < timezone.now():
         tickets_to_release = [d.ticket for d in existing_details]
@@ -54,10 +58,12 @@ def reserve_tickets(user, ticket_ids):
         existing_details = []
 
     tickets_in_cart_ids = [d.ticket.id for d in existing_details]
-    tickets = list(Ticket.objects.select_for_update().filter(id__in=ticket_ids).order_by('id'))
+    tickets = list(
+        Ticket.objects.select_for_update().filter(id__in=ticket_ids).order_by("id")
+    )
 
     if len(tickets) + len(tickets_in_cart_ids) > 8:
-        raise ValidationError(f"Too many tickets in cart.")
+        raise ValidationError("Too many tickets in cart.")
 
     tickets_to_update = []
     order_details_to_create = []
@@ -75,14 +81,16 @@ def reserve_tickets(user, ticket_ids):
         ticket.reserved_until = expiry_time
         tickets_to_update.append(ticket)
 
-        order_details_to_create.append(OrderDetails(order=order, participant=None, ticket=ticket))
+        order_details_to_create.append(
+            OrderDetails(order=order, participant=None, ticket=ticket)
+        )
 
     OrderDetails.objects.bulk_create(order_details_to_create)
     Ticket.objects.bulk_update(tickets_to_update, ["status", "reserved_until"])
 
+
 @transaction.atomic
 def release_order_tickets(order, tickets):
-
     for ticket in tickets:
         ticket.status = Ticket.Status.AVAILABLE
         ticket.reserved_until = None
@@ -106,17 +114,16 @@ def update_participants_details(user, data_list, order_details):
             participant.pesel = data.get("pesel")
             participant.save()
         else:
-            detail.participant = Participant.objects.create(
-                user=user,
-                **data
-            )
+            detail.participant = Participant.objects.create(user=user, **data)
             detail.save()
 
 
 @transaction.atomic
 def remove_from_cart(user, ticket_id):
     try:
-        detail = OrderDetails.objects.get(ticket_id=ticket_id, order__user=user, order__status=Order.Status.PENDING)
+        detail = OrderDetails.objects.get(
+            ticket_id=ticket_id, order__user=user, order__status=Order.Status.PENDING
+        )
 
         ticket = detail.ticket
         order = detail.order
@@ -132,6 +139,7 @@ def remove_from_cart(user, ticket_id):
 
     except OrderDetails.DoesNotExist:
         raise ValidationError("This ticket is not in your cart.")
+
 
 @transaction.atomic
 def finalize_order(order_id):
@@ -169,13 +177,16 @@ def cancel_order_service(user, order_id):
     if order.status == "canceled":
         raise ValidationError("Order is already canceled.")
 
-    order_details = OrderDetails.objects.filter(order=order).select_related("ticket", "ticket__event")
+    order_details = OrderDetails.objects.filter(order=order).select_related(
+        "ticket", "ticket__event"
+    )
 
     now = timezone.now()
     for detail in order_details:
         if detail.ticket.event.start_datetime < now:
             raise ValidationError(
-                f"Cannot cancel: The event '{detail.ticket.event.name}' has already started or passed.")
+                f"Cannot cancel: The event '{detail.ticket.event.name}' has already started or passed."
+            )
 
     tickets_to_update = []
 

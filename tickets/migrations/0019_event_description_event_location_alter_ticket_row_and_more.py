@@ -4,35 +4,34 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0018_event_has_numbered_seats_event_need_pesel'),
+        ("tickets", "0018_event_has_numbered_seats_event_need_pesel"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='description',
+            model_name="event",
+            name="description",
             field=models.TextField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='event',
-            name='location',
-            field=models.CharField(default='Main Arena', max_length=255),
+            model_name="event",
+            name="location",
+            field=models.CharField(default="Main Arena", max_length=255),
         ),
         migrations.AlterField(
-            model_name='ticket',
-            name='row',
+            model_name="ticket",
+            name="row",
             field=models.CharField(blank=True, max_length=16, null=True),
         ),
         migrations.AlterField(
-            model_name='ticket',
-            name='seat',
+            model_name="ticket",
+            name="seat",
             field=models.CharField(blank=True, max_length=16, null=True),
         ),
         migrations.AlterField(
-            model_name='ticket',
-            name='sector',
+            model_name="ticket",
+            name="sector",
             field=models.CharField(blank=True, max_length=16, null=True),
         ),
     ]

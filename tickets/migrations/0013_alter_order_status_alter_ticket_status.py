@@ -4,20 +4,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0012_alter_ticket_unique_together'),
+        ("tickets", "0012_alter_ticket_unique_together"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='order',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('completed', 'Completed'), ('canceled', 'Canceled')], default='pending', max_length=16),
+            model_name="order",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Pending"),
+                    ("completed", "Completed"),
+                    ("canceled", "Canceled"),
+                ],
+                default="pending",
+                max_length=16,
+            ),
         ),
         migrations.AlterField(
-            model_name='ticket',
-            name='status',
-            field=models.CharField(choices=[('available', 'Available'), ('reserved', 'Reserved'), ('sold', 'Sold')], default='available', max_length=16),
+            model_name="ticket",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("available", "Available"),
+                    ("reserved", "Reserved"),
+                    ("sold", "Sold"),
+                ],
+                default="available",
+                max_length=16,
+            ),
         ),
     ]

@@ -5,57 +5,69 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0016_remove_event_event_date_event_start_datetime_and_more'),
+        ("tickets", "0016_remove_event_event_date_event_start_datetime_and_more"),
     ]
 
     operations = [
-
         migrations.RunSQL("DROP VIEW IF EXISTS user_tickets_view CASCADE;"),
-
         migrations.AlterModelOptions(
-            name='ticket',
-            options={'permissions': [('can_scan_ticket', 'Can verify and scan event tickets')]},
+            name="ticket",
+            options={
+                "permissions": [
+                    ("can_scan_ticket", "Can verify and scan event tickets")
+                ]
+            },
         ),
         migrations.RenameField(
-            model_name='orderdetails',
-            old_name='is_scanned',
-            new_name='scanned_at',
+            model_name="orderdetails",
+            old_name="is_scanned",
+            new_name="scanned_at",
         ),
         migrations.AlterUniqueTogether(
-            name='ticket',
+            name="ticket",
             unique_together=set(),
         ),
         migrations.AddField(
-            model_name='ticket',
-            name='row',
+            model_name="ticket",
+            name="row",
             field=models.CharField(default=1, max_length=16),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='ticket',
-            name='sector',
+            model_name="ticket",
+            name="sector",
             field=models.CharField(default=1, max_length=16),
             preserve_default=False,
         ),
         migrations.AlterField(
-            model_name='participant',
-            name='pesel',
-            field=encrypted_model_fields.fields.EncryptedCharField(blank=True, null=True),
+            model_name="participant",
+            name="pesel",
+            field=encrypted_model_fields.fields.EncryptedCharField(
+                blank=True, null=True
+            ),
         ),
         migrations.AlterField(
-            model_name='ticket',
-            name='seat',
+            model_name="ticket",
+            name="seat",
             field=models.CharField(max_length=16),
         ),
         migrations.AlterField(
-            model_name='ticket',
-            name='status',
-            field=models.CharField(choices=[('available', 'Available'), ('reserved', 'Reserved'), ('sold', 'Sold'), ('scanned', 'Scanned')], default='available', max_length=16),
+            model_name="ticket",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("available", "Available"),
+                    ("reserved", "Reserved"),
+                    ("sold", "Sold"),
+                    ("scanned", "Scanned"),
+                ],
+                default="available",
+                max_length=16,
+            ),
         ),
         migrations.AlterUniqueTogether(
-            name='ticket',
-            unique_together={('event', 'sector', 'row', 'seat')},
+            name="ticket",
+            unique_together={("event", "sector", "row", "seat")},
         ),
     ]

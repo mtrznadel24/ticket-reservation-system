@@ -5,15 +5,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0020_event_image_alter_event_start_datetime_and_more'),
+        ("tickets", "0020_event_image_alter_event_start_datetime_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='orderdetails',
-            name='order',
-            field=models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='details', to='tickets.order'),
+            model_name="orderdetails",
+            name="order",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="details",
+                to="tickets.order",
+            ),
         ),
     ]

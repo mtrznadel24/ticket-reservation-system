@@ -14,7 +14,7 @@ SITE_URL = "http://localhost:8000"
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = config("SECRET_KEY")
 
-FIELD_ENCRYPTION_KEY=config("FIELD_ENCRYPTION_KEY")
+FIELD_ENCRYPTION_KEY = config("FIELD_ENCRYPTION_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config("DEBUG", cast=bool)
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    'encrypted_model_fields'
+    "encrypted_model_fields",
 ]
 
 MIDDLEWARE = [
@@ -121,8 +121,8 @@ USE_TZ = True
 STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 
 LOGIN_REDIRECT_URL = "/"
@@ -135,16 +135,16 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Celery
 
-CELERY_BROKER_URL = config('CELERY_BROKER_URL')
-CELERY_RESULT_BACKEND = config('CELERY_BROKER_URL')
-CELERY_ACCEPT_CONTENT = ['json']
-CELERY_TASK_SERIALIZER = 'json'
-CELERY_RESULT_SERIALIZER = 'json'
+CELERY_BROKER_URL = config("CELERY_BROKER_URL")
+CELERY_RESULT_BACKEND = config("CELERY_BROKER_URL")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
 
 CELERY_BEAT_SCHEDULE = {
-    'cleanup_reservations': {
-        'task': 'cleanup_reservations_task',
-        'schedule': 300.0,
+    "cleanup_reservations": {
+        "task": "cleanup_reservations_task",
+        "schedule": 300.0,
     }
 }

@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0014_alter_orderdetails_participant'),
+        ("tickets", "0014_alter_orderdetails_participant"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='orderdetails',
-            old_name='ticket_UUID',
-            new_name='ticket_uuid',
+            model_name="orderdetails",
+            old_name="ticket_UUID",
+            new_name="ticket_uuid",
         ),
         migrations.AddField(
-            model_name='order',
-            name='tickets_pdf',
-            field=models.FileField(blank=True, null=True, upload_to='tickets_pdfs'),
+            model_name="order",
+            name="tickets_pdf",
+            field=models.FileField(blank=True, null=True, upload_to="tickets_pdfs"),
         ),
     ]

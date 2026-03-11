@@ -2,10 +2,13 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   test_and_lint:
     runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
     services:
       postgres:
         image: postgres:15-alpine
@@ -49,7 +52,7 @@ jobs:
         env:
           DEBUG: 'True'
           SECRET_KEY: 'test-secret-key-123'
-          FIELD_ENCRYPTION_KEY: 'fake_encryption_key_for_tests_12345'
+          FIELD_ENCRYPTION_KEY: 'cw_0x689RpI-jtRR7oE8h_eQsKImvJapLeSbXpwF4e4='
           ALLOWED_HOSTS: 'localhost,127.0.0.1'
 
           DB_NAME: ticket_db_test
@@ -65,9 +68,8 @@ jobs:
         run: poetry run pytest
 
   deploy:
-    needs: test_and_lint
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v0.1.10
@@ -79,7 +81,3 @@ jobs:
             cd ~/ticket-reservation-system
             git pull
             docker compose -f docker-compose.prod.yml up -d --build
-
-
-
-

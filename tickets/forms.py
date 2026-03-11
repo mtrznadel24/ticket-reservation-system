@@ -19,22 +19,25 @@ class CustomUserCreationForm(UserCreationForm):
             "password2",
         )
 
+
 class ParticipantForm(forms.Form):
     first_name = forms.CharField(
         max_length=64,
         required=True,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Imię'})
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "Imię"}),
     )
     last_name = forms.CharField(
         max_length=64,
         required=True,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nazwisko'})
+        widget=forms.TextInput(
+            attrs={"class": "form-control", "placeholder": "Nazwisko"}
+        ),
     )
     pesel = forms.CharField(
         min_length=11,
         max_length=11,
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'PESEL'})
+        widget=forms.TextInput(attrs={"class": "form-control", "placeholder": "PESEL"}),
     )
 
     def clean_pesel(self):

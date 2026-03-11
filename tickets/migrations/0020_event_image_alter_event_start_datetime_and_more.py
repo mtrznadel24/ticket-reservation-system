@@ -5,39 +5,53 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0019_event_description_event_location_alter_ticket_row_and_more'),
+        ("tickets", "0019_event_description_event_location_alter_ticket_row_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='image',
-            field=models.ImageField(blank=True, null=True, upload_to='events/%Y/%m/%d/'),
+            model_name="event",
+            name="image",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="events/%Y/%m/%d/"
+            ),
         ),
         migrations.AlterField(
-            model_name='event',
-            name='start_datetime',
+            model_name="event",
+            name="start_datetime",
             field=models.DateTimeField(db_index=True),
         ),
         migrations.AlterField(
-            model_name='order',
-            name='status',
-            field=models.CharField(choices=[('pending', 'Pending'), ('completed', 'Completed'), ('canceled', 'Canceled')], db_index=True, default='pending', max_length=16),
+            model_name="order",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("pending", "Pending"),
+                    ("completed", "Completed"),
+                    ("canceled", "Canceled"),
+                ],
+                db_index=True,
+                default="pending",
+                max_length=16,
+            ),
         ),
         migrations.AlterField(
-            model_name='order',
-            name='tickets_pdf',
-            field=models.FileField(blank=True, null=True, upload_to='tickets_pdfs/%Y/%m/%d/'),
+            model_name="order",
+            name="tickets_pdf",
+            field=models.FileField(
+                blank=True, null=True, upload_to="tickets_pdfs/%Y/%m/%d/"
+            ),
         ),
         migrations.AlterField(
-            model_name='orderdetails',
-            name='ticket_uuid',
+            model_name="orderdetails",
+            name="ticket_uuid",
             field=models.UUIDField(default=uuid.uuid4, editable=False, unique=True),
         ),
         migrations.AddIndex(
-            model_name='ticket',
-            index=models.Index(fields=['status', 'reserved_until'], name='tickets_status_7cef50_idx'),
+            model_name="ticket",
+            index=models.Index(
+                fields=["status", "reserved_until"], name="tickets_status_7cef50_idx"
+            ),
         ),
     ]

@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0017_alter_ticket_options_and_more'),
+        ("tickets", "0017_alter_ticket_options_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='event',
-            name='has_numbered_seats',
+            model_name="event",
+            name="has_numbered_seats",
             field=models.BooleanField(default=True),
         ),
         migrations.AddField(
-            model_name='event',
-            name='need_pesel',
+            model_name="event",
+            name="need_pesel",
             field=models.BooleanField(default=False),
         ),
     ]

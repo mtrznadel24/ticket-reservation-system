@@ -54,7 +54,11 @@ def draw_tickets_to_buffer(tickets_data):
         if data.get("has_numbered_seats"):
             p.setFont("Helvetica-Bold", 12)
             p.setFillColor(HexColor("#E74C3C"))
-            p.drawString(box_x + 20, box_y + box_h - 80, f"SECTOR: {data['sector']}   |   ROW: {data['row']}")
+            p.drawString(
+                box_x + 20,
+                box_y + box_h - 80,
+                f"SECTOR: {data['sector']}   |   ROW: {data['row']}",
+            )
 
             p.setFont("Helvetica-Bold", 14)
             p.drawString(box_x + 20, box_y + box_h - 100, f"SEAT: {data['seat']}")

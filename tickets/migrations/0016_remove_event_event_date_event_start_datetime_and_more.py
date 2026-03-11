@@ -5,25 +5,28 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('tickets', '0015_rename_ticket_uuid_orderdetails_ticket_uuid_and_more'),
+        ("tickets", "0015_rename_ticket_uuid_orderdetails_ticket_uuid_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='event',
-            name='event_date',
+            model_name="event",
+            name="event_date",
         ),
         migrations.AddField(
-            model_name='event',
-            name='start_datetime',
-            field=models.DateTimeField(default=datetime.datetime(2026, 3, 2, 0, 28, 9, 437871, tzinfo=datetime.timezone.utc)),
+            model_name="event",
+            name="start_datetime",
+            field=models.DateTimeField(
+                default=datetime.datetime(
+                    2026, 3, 2, 0, 28, 9, 437871, tzinfo=datetime.timezone.utc
+                )
+            ),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='orderdetails',
-            name='is_scanned',
+            model_name="orderdetails",
+            name="is_scanned",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

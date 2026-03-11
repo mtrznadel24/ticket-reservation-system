@@ -13,6 +13,14 @@ staticfiles_collected/
 
 # Environment variables (KLUCZOWE!)
 .env
+.env.prod
+
+#Celery
+celerybeat-schedule
+celerybeat-schedule.db
+celerybeat-schedule.dat
+celerybeat-schedule.bak
+celerybeat-schedule.dir
 
 # Poetry
 .python-version

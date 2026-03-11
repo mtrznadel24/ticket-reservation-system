@@ -52,7 +52,7 @@ jobs:
         env:
           DEBUG: 'True'
           SECRET_KEY: 'test-secret-key-123'
-          FIELD_ENCRYPTION_KEY: 'vS5S6f685df-Yj57v5y1f8A3j57v5y1f8A3j57v5y1f8='
+          FIELD_ENCRYPTION_KEY: 'cw_0x689RpI-jtRR7oE8h_eQsKImvJapLeSbXpwF4e4='
           ALLOWED_HOSTS: 'localhost,127.0.0.1'
 
           DB_NAME: ticket_db_test
@@ -81,7 +81,3 @@ jobs:
             cd ~/ticket-reservation-system
             git pull
             docker compose -f docker-compose.prod.yml up -d --build
-
-
-
-

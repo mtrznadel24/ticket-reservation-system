@@ -11,6 +11,9 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+
+        migrations.RunSQL("DROP VIEW IF EXISTS user_tickets_view CASCADE;"),
+
         migrations.AlterModelOptions(
             name='ticket',
             options={'permissions': [('can_scan_ticket', 'Can verify and scan event tickets')]},

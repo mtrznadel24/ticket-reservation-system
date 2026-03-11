@@ -3,14 +3,23 @@ services:
     build: ./nginx
     container_name: nginx
     ports:
-      - "8080:80"
+      - "80:80"
     # - "443:443"
     volumes:
       - static_volume:/app/static
       - media_volume:/app/media
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
     depends_on:
       - web
     restart: always
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - ./data/certbot/conf:/etc/letsencrypt
+      - ./data/certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
   db:
     image: postgres:15-alpine

@@ -44,13 +44,18 @@
                 <h3 class="fw-bold mb-3">General Admission</h3>
                 <p class="text-muted mb-4">This event has unassigned standing or seating areas.</p>
 
-                <form method="post" class="d-flex flex-column align-items-center">
+                <form method="post" class="d-flex flex-column align-items-center" id="gaForm">
                     {% csrf_token %}
                     <div class="input-group mb-4" style="max-width: 200px;">
                         <span class="input-group-text bg-white"><i class="bi bi-people"></i></span>
-                        <input type="number" name="quantity" class="form-control text-center fs-5" value="1" min="1" max="10" required>
+                        <input type="number" name="quantity" id="gaQuantity" class="form-control text-center fs-5" value="1" min="1" max="10" required>
                     </div>
-                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm">
+
+                    <h4 id="ga-price-summary" class="mb-3 fw-bold text-success">
+                        Total: <span id="ga-total-price">0.00</span> PLN
+                    </h4>
+
+                    <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 fw-bold shadow-sm" id="gaSubmitBtn">
                         Add to Cart
                     </button>
                 </form>
@@ -101,7 +106,8 @@
                                                 {% for t in row.list %}
                                                     {% if t.status == 'available' %}
                                                         <input type="checkbox" class="btn-check seat-checkbox"
-                                                               name="ticket_ids" value="{{ t.id }}" id="ticket_{{ t.id }}" autocomplete="off">
+                                                               name="ticket_ids" value="{{ t.id }}" id="ticket_{{ t.id }}"
+                                                               data-price="{{ t.price }}" autocomplete="off">
 
                                                         <label class="btn btn-outline-primary seat-btn fw-bold" for="ticket_{{ t.id }}">
                                                             {{ t.seat }}
@@ -119,9 +125,12 @@
                             </div>
                         {% endfor %}
                     </div>
-
                     <div class="text-center mt-5">
-                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow fw-bold" id="submitBtn">
+                        <h4 id="price-summary" class="mb-3 d-none fw-bold text-success">
+                            Total: <span id="total-price">0.00</span> PLN
+                        </h4>
+
+                        <button type="submit" class="btn btn-primary btn-lg rounded-pill px-5 shadow fw-bold" id="submitBtn" disabled>
                             <i class="bi bi-cart-plus me-2"></i> Add Selected to Cart
                         </button>
                     </div>
@@ -159,4 +168,95 @@
         border-radius: 10px;
     }
 </style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+
+        const gaQuantityInput = document.getElementById('gaQuantity');
+        const gaPriceSummary = document.getElementById('ga-price-summary');
+        const gaTotalPriceSpan = document.getElementById('ga-total-price');
+        const gaSubmitBtn = document.getElementById('gaSubmitBtn');
+
+        if (gaQuantityInput) {
+
+            const availablePrices = [
+                {% for t in tickets %}
+                    {% if t.status == 'available' %}
+                        {{ t.price|stringformat:".2f" }},
+                    {% endif %}
+                {% endfor %}
+            ];
+
+            availablePrices.sort((a, b) => a - b);
+
+            const maxAvailable = Math.min(10, availablePrices.length);
+            gaQuantityInput.setAttribute('max', maxAvailable);
+
+            function updateGaTotal() {
+                let qty = parseInt(gaQuantityInput.value) || 0;
+
+                if (qty <= 0 || availablePrices.length === 0) {
+                    gaTotalPriceSpan.textContent = "0.00";
+                    gaSubmitBtn.disabled = true;
+                    if (availablePrices.length === 0) {
+                        gaSubmitBtn.textContent = "Sold Out";
+                    }
+                    return;
+                }
+
+                if (qty > maxAvailable) {
+                    qty = maxAvailable;
+                    gaQuantityInput.value = qty;
+                }
+
+                let total = 0;
+                for (let i = 0; i < qty; i++) {
+                    total += availablePrices[i];
+                }
+
+                gaTotalPriceSpan.textContent = total.toFixed(2);
+                gaSubmitBtn.disabled = false;
+            }
+
+            gaQuantityInput.addEventListener('input', updateGaTotal);
+            gaQuantityInput.addEventListener('change', updateGaTotal);
+
+            updateGaTotal();
+        }
+
+
+        const seatCheckboxes = document.querySelectorAll('.seat-checkbox');
+        const priceSummary = document.getElementById('price-summary');
+        const totalPriceSpan = document.getElementById('total-price');
+        const submitBtn = document.getElementById('submitBtn');
+
+        if (seatCheckboxes.length > 0) {
+            seatCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', calculateTotal);
+            });
+
+            function calculateTotal() {
+                let total = 0;
+                let count = 0;
+
+                seatCheckboxes.forEach(checkbox => {
+                    if (checkbox.checked) {
+                        total += parseFloat(checkbox.getAttribute('data-price') || 0);
+                        count++;
+                    }
+                });
+
+                if (count > 0) {
+                    priceSummary.classList.remove('d-none');
+                    totalPriceSpan.textContent = total.toFixed(2);
+                    submitBtn.disabled = false;
+                } else {
+                    priceSummary.classList.add('d-none');
+                    submitBtn.disabled = true;
+                }
+            }
+        }
+    });
+</script>
+
 {% endblock %}

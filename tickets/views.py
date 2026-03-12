@@ -109,10 +109,14 @@ def tickets_view(request, event_id):
     2. Quantity selection for general admission.
     """
     event = get_object_or_404(Event, pk=event_id)
-    tickets = Ticket.objects.filter(event=event).annotate(
-        row_int=Cast('row', output_field=IntegerField()),
-        seat_int=Cast('seat', output_field=IntegerField())
-    ).order_by("sector", "row_int", "seat_int")
+    tickets = (
+        Ticket.objects.filter(event=event)
+        .annotate(
+            row_int=Cast("row", output_field=IntegerField()),
+            seat_int=Cast("seat", output_field=IntegerField()),
+        )
+        .order_by("sector", "row_int", "seat_int")
+    )
 
     if request.method == "POST":
         selected_ticket_ids = []
@@ -123,9 +127,9 @@ def tickets_view(request, event_id):
             quantity = int(request.POST.get("quantity", 0))
             if quantity > 0:
                 selected_ticket_ids = list(
-                    Ticket.objects.filter(
-                        event=event, status=Ticket.Status.AVAILABLE
-                    ).order_by("price").values_list("id", flat=True)[:quantity]
+                    Ticket.objects.filter(event=event, status=Ticket.Status.AVAILABLE)
+                    .order_by("price")
+                    .values_list("id", flat=True)[:quantity]
                 )
 
         if not selected_ticket_ids:

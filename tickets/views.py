@@ -5,7 +5,8 @@ from django.conf import settings
 from django.contrib.auth import login
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Q, Sum, IntegerField
+from django.db.models.functions import Cast
 from django.forms import formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
@@ -108,7 +109,10 @@ def tickets_view(request, event_id):
     2. Quantity selection for general admission.
     """
     event = get_object_or_404(Event, pk=event_id)
-    tickets = Ticket.objects.filter(event=event).order_by("sector", "row", "seat")
+    tickets = Ticket.objects.filter(event=event).annotate(
+        row_int=Cast('row', output_field=IntegerField()),
+        seat_int=Cast('seat', output_field=IntegerField())
+    ).order_by("sector", "row_int", "seat_int")
 
     if request.method == "POST":
         selected_ticket_ids = []
@@ -121,7 +125,7 @@ def tickets_view(request, event_id):
                 selected_ticket_ids = list(
                     Ticket.objects.filter(
                         event=event, status=Ticket.Status.AVAILABLE
-                    ).values_list("id", flat=True)[:quantity]
+                    ).order_by("price").values_list("id", flat=True)[:quantity]
                 )
 
         if not selected_ticket_ids:

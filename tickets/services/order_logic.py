@@ -6,6 +6,9 @@ from django.utils import timezone
 
 from tickets.models import Order, Ticket, Participant, OrderDetails
 from tickets.tasks import generate_tickets_pdf_task
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @transaction.atomic
@@ -164,6 +167,9 @@ def finalize_order(order_id):
     order.updated_at = timezone.now()
     order.save()
 
+    logger.info(
+        f"Order #{order_id} has been successfully FINALIZED and tickets marked as SOLD."
+    )
     generate_tickets_pdf_task.delay_on_commit(order_id)
 
 
@@ -200,3 +206,4 @@ def cancel_order_service(user, order_id):
 
     order.status = Order.Status.CANCELED
     order.save()
+    logger.info(f"Order #{order_id} has been CANCELED by user {user.username}.")

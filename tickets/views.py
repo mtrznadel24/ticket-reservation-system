@@ -28,6 +28,9 @@ from tickets.services.order_logic import (
     release_order_tickets,
 )
 from .services.stripe_service import create_stripe_checkout_session
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Public views
 
@@ -194,6 +197,10 @@ def cart_view(request):
                 return redirect(session.url, code=303)
 
             except Exception as e:
+                logger.error(
+                    f"Failed to create Stripe Checkout Session for order {order.id}: {str(e)}",
+                    exc_info=True,
+                )
                 messages.error(request, f"Error: {str(e)}")
         else:
             messages.error(request, "Errors in the form")
@@ -283,6 +290,10 @@ def finalize_cart(request):
         messages.error(request, "No order to finalize.")
         return redirect("home")
     except Exception as e:
+        logger.error(
+            f"Error occurred during finalizing order from session {session_id}: {str(e)}",
+            exc_info=True,
+        )
         messages.error(request, f"Error occurred during finalizing  {e}")
         return redirect("cart")
 
@@ -388,6 +399,9 @@ def scan_ticket_view(request, ticket_uuid):
 
     if request.method == "POST":
         if detail.scanned_at:
+            logger.warning(
+                f"Staff {request.user.username} attempted to double-scan ticket {detail.ticket.id}."
+            )
             messages.error(request, "Ticket already scanned.")
             return redirect("scan_ticket", ticket_uuid=ticket_uuid)
 
@@ -396,6 +410,9 @@ def scan_ticket_view(request, ticket_uuid):
         detail.ticket.status = Ticket.Status.SCANNED
         detail.ticket.save()
 
+        logger.info(
+            f"Ticket {detail.ticket.id} successfully SCANNED by {request.user.username}."
+        )
         messages.success(request, "Ticket scanned.")
 
         return redirect("scan_ticket", ticket_uuid=ticket_uuid)
@@ -442,8 +459,10 @@ def stripe_webhook(request):
     try:
         event = stripe.Webhook.construct_event(payload, sig_header, endpoint_secret)
     except ValueError:
+        logger.error("Stripe Webhook Error: Invalid payload", exc_info=True)
         return HttpResponse(status=400)
     except stripe.error.SignatureVerificationError:
+        logger.error("Stripe Webhook Error: Invalid signature", exc_info=True)
         return HttpResponse(status=400)
 
     if event["type"] == "checkout.session.completed":
@@ -451,6 +470,11 @@ def stripe_webhook(request):
         order_id = session.get("metadata", {}).get("order_id")
 
         if order_id:
+            logger.info(f"Stripe Webhook SUCCESS: Finalizing order #{order_id}")
             finalize_order(order_id)
+        else:
+            logger.warning(
+                f"Stripe Webhook WARNING: Session {session.get('id')} has no order_id in metadata"
+            )
 
     return HttpResponse(status=200)

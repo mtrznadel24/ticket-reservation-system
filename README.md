@@ -16,22 +16,6 @@ A robust, web-based ticket reservation system built with Django and PostgreSQL. 
 
 ---
 
-## 🌐 Live Demo
-#### **Website:** [https://tickets.mtrznadel.me](https://tickets.mtrznadel.me)  
-
-### Test Credentials:
-* **User (Client):** `demo_user` / `Password123!`
-* **Staff (Scanner):** `staff_user` / `Password123!`
-
-### Payment Testing:
-The system is integrated with Stripe in **Test Mode**. To complete a successful transaction and receive a ticket PDF, use the following test card details:
-* **Card Number:** `4242 4242 4242 4242`
-* **Expiry/CVC:** Any future date and any 3 digits.
-
-> 💡 **Note:** The database may be reset periodically to maintain a clean demo environment.
-> 
----
-
 ### Project Background & Evolution
 This project originated as a 2-person university assignment for a Database Systems course. I decided to refactor the code to transform it from a simple academic task into a professional-grade application.
 
